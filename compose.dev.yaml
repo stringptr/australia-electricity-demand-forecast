@@ -1,10 +1,12 @@
+name: electricity-dev
+
 services:
   postgres:
-    image: docker.io/postgres:18.3-alpine3.23
+    image: docker.io/postgres:18.4-alpine3.23
     restart: unless-stopped
     volumes:
       - ./storage/master:/var/lib/postgresql
-      # - ./migrations:/docker-entrypoint-initdb.d
+      - ./migrations/init-dbs.sh:/docker-entrypoint-initdb.d/init-dbs.sh
     env_file:
       - .env
     environment:
@@ -23,4 +25,197 @@ services:
       interval: 5s
       retries: 10
       timeout: 5s
+    networks:
+      - devnet
     profiles: ["dev"]
+
+  garage:
+    image: docker.io/dxflrs/garage:v2.3.0
+    restart: unless-stopped
+    command: ["/garage", "-c", "/etc/garage/config.toml", "server", "--single-node", "--default-bucket"]
+    ports:
+      - ${HOST_IP:-127.0.0.1}:3900:3900
+      - ${HOST_IP:-127.0.0.1}:3902:3902
+    volumes:
+      - ./configs/garage/config.toml:/etc/garage/config.toml:ro
+      - ./storage/garage:/var/lib/garage
+    networks:
+      - devnet
+    profiles: ["dev"]
+    environment:
+      GARAGE_DEFAULT_BUCKET: mlflow
+      GARAGE_DEFAULT_ACCESS_KEY: mlflow-key-id
+      GARAGE_DEFAULT_SECRET_KEY: mlflow-secret-key
+
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:v1.145.0
+    restart: unless-stopped
+    ports:
+      - ${HOST_IP:-127.0.0.1}:8428:8428
+    volumes:
+      - ./storage/victoriametrics:/storage
+    command:
+      - "-storageDataPath=/storage"
+      - "-retentionPeriod=${VM_RETENTION:-3M}"
+      - "-httpListenAddr=:8428"
+      - "-selfScrapeInterval=10s"
+      - "-search.maxQueryDuration=30s"
+      - "-memory.allowedPercent=60"
+      - "-storage.minFreeDiskSpaceBytes=1GB"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8428/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - devnet
+    profiles: ["dev"]
+
+  dagster-user-code:
+    build:
+      context: .
+      dockerfile: dagster/etl/Containerfile
+    restart: unless-stopped
+    volumes:
+      - ./dagster:/opt/dagster/app
+    environment:
+      DAGSTER_POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      DAGSTER_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DAGSTER_POSTGRES_DB: dagster_db
+      DAGSTER_POSTGRES_HOST: postgres
+      DAGSTER_POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      DAGSTER_CURRENT_IMAGE: electricity-dev-dagster-user-code:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - devnet
+    profiles: ["dev"]
+
+  dagster-webserver:
+    build:
+      context: .
+      dockerfile: dagster/daemon/Containerfile
+    restart: unless-stopped
+    ports:
+      - ${HOST_IP:-127.0.0.1}:3000:3000
+    environment:
+      DAGSTER_POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      DAGSTER_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DAGSTER_POSTGRES_DB: dagster_db
+      DAGSTER_POSTGRES_HOST: postgres
+      DAGSTER_POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+    # volumes:
+    #   - /var/run/docker.sock:/var/run/docker.sock
+    #   - /tmp/io_manager_storage:/tmp/io_manager_storage
+    entrypoint:
+      - dagster-webserver
+      - -h
+      - "0.0.0.0"
+      - -p
+      - "3000"
+      - -w
+      - /opt/dagster/dagster_home/workspace.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+      dagster-user-code:
+        condition: service_healthy
+    networks:
+      - devnet
+    profiles: ["dev"]
+
+  dagster-daemon:
+    build:
+      context: .
+      dockerfile: dagster/daemon/Containerfile
+    restart: unless-stopped
+    environment:
+      DAGSTER_POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      DAGSTER_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DAGSTER_POSTGRES_DB: dagster_db
+      DAGSTER_POSTGRES_HOST: postgres
+      DAGSTER_POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+    # volumes:
+    #   - /var/run/docker.sock:/var/run/docker.sock
+    #   - /tmp/io_manager_storage:/tmp/io_manager_storage
+    entrypoint:
+      - dagster-daemon
+      - run
+    depends_on:
+      postgres:
+        condition: service_healthy
+      dagster-user-code:
+        condition: service_healthy
+    networks:
+      - devnet
+    profiles: ["dev"]
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v3.14.0
+    restart: unless-stopped
+    ports:
+      - ${HOST_IP:-127.0.0.1}:5000:5000
+    environment:
+      MLFLOW_BACKEND_STORE_URI: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:${POSTGRES_PORT:-5432}/mlflow_db
+      MLFLOW_S3_ENDPOINT_URL: http://garage:3900
+      MLFLOW_ARTIFACTS_DESTINATION: s3://mlflow/
+      AWS_ACCESS_KEY_ID: mlflow-key-id
+      AWS_SECRET_ACCESS_KEY: mlflow-secret-key
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_S3_FORCE_PATH_STYLE: "true"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        pip install --quiet psycopg2-binary boto3 2>/dev/null
+        exec mlflow server \
+          --backend-store-uri "$${MLFLOW_BACKEND_STORE_URI}" \
+          --default-artifact-root "$${MLFLOW_ARTIFACTS_DESTINATION}" \
+          --serve-artifacts \
+          --host 0.0.0.0 \
+          --port 5000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      garage:
+        condition: service_started
+    networks:
+      - devnet
+    profiles: ["dev"]
+
+  dbt:
+    image: ghcr.io/dbt-labs/dbt-postgres:1.9.0
+    restart: "no"
+    volumes:
+      - ./dbt:/usr/app
+    environment:
+      DBT_USER: ${POSTGRES_USER:-postgres}
+      DBT_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DBT_HOST: postgres
+      DBT_PORT: ${POSTGRES_PORT:-5432}
+      DBT_DB: ${POSTGRES_DB:-electricity}
+    entrypoint: ["dbt"]
+    working_dir: /usr/app
+    networks:
+      - devnet
+    profiles: ["dev"]
+
+  dlt:
+    build:
+      context: ./dlt
+      dockerfile: Containerfile
+    restart: "no"
+    volumes:
+      - ./dlt:/app
+    environment:
+      DESTINATION__POSTGRES__CREDENTIALS__PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    working_dir: /app
+    networks:
+      - devnet
+    profiles: ["dev"]
+
+networks:
+  devnet:
+    name: electricity-dev_devnet
+    driver: bridge
