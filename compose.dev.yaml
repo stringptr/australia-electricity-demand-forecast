@@ -110,7 +110,11 @@ services:
       - "-memory.allowedPercent=60"
       - "-storage.minFreeDiskSpaceBytes=1GB"
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8428/health"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:8428/health > /dev/null 2>&1 || exit 1",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -126,6 +130,12 @@ services:
       - ${HOST_IP:-127.0.0.1}:4222:4222
       - ${HOST_IP:-127.0.0.1}:8222:8222
     command: ["-js", "-m", "8222"]
+    healthcheck:
+      test: ["CMD", "nats-server", "--check", "healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     networks:
       - devnet
     profiles: ["dev"]
@@ -141,6 +151,12 @@ services:
         condition: service_healthy
       nats:
         condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/q/health/ready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     networks:
       - devnet
     profiles: ["dev"]
@@ -170,6 +186,19 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import socket; s=socket.socket(); s.settimeout(5);
+            s.connect(('127.0.0.1',4000)); s.close()",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
     networks:
       - devnet
     profiles: ["dev"]
@@ -195,6 +224,19 @@ services:
       - "3000"
       - -w
       - /opt/dagster/dagster_home/workspace.yaml
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request;
+            urllib.request.urlopen('http://localhost:3000/dagit_info')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     depends_on:
       postgres:
         condition: service_healthy
@@ -218,6 +260,19 @@ services:
     entrypoint:
       - dagster-daemon
       - run
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import os; c=open('/proc/1/cmdline').read(); exit(0 if
+            'dagster-daemon' in c else 1)",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     depends_on:
       postgres:
         condition: service_healthy
@@ -250,6 +305,20 @@ services:
           --serve-artifacts \
           --host 0.0.0.0 \
           --port 5000
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; assert
+            urllib.request.urlopen('http://localhost:5000/health').status ==
+            200",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     depends_on:
       postgres:
         condition: service_healthy
