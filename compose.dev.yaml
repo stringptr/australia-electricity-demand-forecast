@@ -152,12 +152,21 @@ services:
     restart: unless-stopped
     volumes:
       - ./dagster:/opt/dagster/app
+      - ./dlt:/opt/dagster/dlt
+      - ./dbt:/opt/dagster/dbt
     environment:
       DAGSTER_POSTGRES_USER: ${POSTGRES_USER:-postgres}
       DAGSTER_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       DAGSTER_POSTGRES_DB: dagster_db
       DAGSTER_POSTGRES_HOST: postgres
       DAGSTER_POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      DESTINATION__POSTGRES__CREDENTIALS__PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DBT_HOST: postgres
+      DBT_PORT: ${POSTGRES_PORT:-5432}
+      DBT_USER: ${POSTGRES_USER:-postgres}
+      DBT_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DBT_DB: ${POSTGRES_DB:-electricity}
+      DLT_PROJECT_DIR: /opt/dagster/dlt
     depends_on:
       postgres:
         condition: service_healthy
@@ -261,6 +270,7 @@ services:
       DBT_HOST: postgres
       DBT_PORT: ${POSTGRES_PORT:-5432}
       DBT_DB: ${POSTGRES_DB:-electricity}
+      DBT_PROFILES_DIR: /usr/app
     entrypoint: ["dbt"]
     working_dir: /usr/app
     networks:

@@ -1,0 +1,12 @@
+name: electricity
+
+profile: electricity_postgres
+
+models:
+  electricity:
+    silver:
+      +schema: silver
+      +materialized: incremental
+
+seeds:
+  +schema: bronze

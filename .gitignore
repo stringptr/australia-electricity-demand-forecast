@@ -3,6 +3,9 @@
 .env*
 !.env.example
 
+# DLT
+.dlt/
+
 # Data storage
 storage/
 
