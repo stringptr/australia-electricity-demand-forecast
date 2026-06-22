@@ -4,6 +4,7 @@ services:
   postgres:
     image: docker.io/postgres:18.4-alpine3.23
     restart: unless-stopped
+    command: ["postgres", "-c", "wal_level=logical"]
     volumes:
       - ./storage/master:/var/lib/postgresql
       - ./migrations/init-dbs.sh:/docker-entrypoint-initdb.d/init-dbs.sh
@@ -68,6 +69,32 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    networks:
+      - devnet
+    profiles: ["dev"]
+
+  nats:
+    image: nats:latest
+    restart: unless-stopped
+    ports:
+      - ${HOST_IP:-127.0.0.1}:4222:4222
+      - ${HOST_IP:-127.0.0.1}:8222:8222
+    command: ["-js", "-m", "8222"]
+    networks:
+      - devnet
+    profiles: ["dev"]
+
+  debezium-server:
+    image: docker.io/debezium/server:3.0.0.Final
+    restart: unless-stopped
+    volumes:
+      - ./configs/debezium:/debezium/conf:ro
+      - ./storage/debezium:/debezium/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_started
     networks:
       - devnet
     profiles: ["dev"]
