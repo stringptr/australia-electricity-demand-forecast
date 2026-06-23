@@ -68,8 +68,8 @@ def _parse_dispatch_csv(csv_text: str) -> list[dict]:
     return rows
 
 
-def _download_and_extract(year: int, month: int) -> list[dict]:
-    """Download ZIP, extract DISPATCHDEMAND CSVs, upload each filtered CSV to S3."""
+def iter_month_files(year: int, month: int) -> Generator[list[dict], None, None]:
+    """Download ZIP, yield filtered rows per DISPATCHDEMAND CSV file."""
     url = f"{NEMWEB_BASE}/{year}/MMSDM_{year}_{month:02d}.zip"
     logger.info("DOWNLOAD: Starting %s", url)
 
@@ -83,17 +83,12 @@ def _download_and_extract(year: int, month: int) -> list[dict]:
 
     logger.info("DOWNLOADED: %s (%d bytes) → %s", url, len(resp.content), tmp_zip)
 
-    all_rows = []
-    dispatch_csvs = []
     uploaded = 0
+    total_rows = 0
 
     with zipfile.ZipFile(tmp_zip) as zf:
-        for name in sorted(zf.namelist()):
-            if "DISPATCHDEMAND" not in name.upper():
-                continue
-            if not name.upper().endswith(".CSV"):
-                continue
-            dispatch_csvs.append(name)
+        dispatch_csvs = [name for name in sorted(zf.namelist())
+                        if "DISPATCHDEMAND" in name.upper() and name.upper().endswith(".CSV")]
 
         logger.info("ZIP SCAN: %s → found %d DISPATCHDEMAND CSV(s): %s", tmp_zip.name, len(dispatch_csvs), dispatch_csvs)
 
@@ -105,7 +100,6 @@ def _download_and_extract(year: int, month: int) -> list[dict]:
                 logger.info("PARSE: processing CSV rows from %s ...", name)
                 rows = _parse_dispatch_csv(csv_text)
                 logger.info("PARSED: %s → %d valid rows", name, len(rows))
-                all_rows.extend(rows)
 
                 s3_key = f"MMSDM/{year}/{month:02d}/{Path(name).name}"
                 buf = io.StringIO()
@@ -114,60 +108,18 @@ def _download_and_extract(year: int, month: int) -> list[dict]:
                 writer.writerows(rows)
                 _upload_csv(buf.getvalue(), s3_key)
                 uploaded += 1
+                total_rows += len(rows)
+
+                yield rows
             except Exception:
                 logger.exception("FAILED: parse/upload %s in ZIP", name)
 
     tmp_zip.unlink()
 
-    if not all_rows:
+    if total_rows == 0:
         logger.warning("SKIP: no DISPATCHDEMAND rows found for %d-%02d", year, month)
-        return []
-
-    logger.info("MONTH %d-%02d complete: %d files uploaded, %d total rows", year, month, uploaded, len(all_rows))
-    return all_rows
-
-
-def process_year(year: int, start_month: int = 1, end_month: int = 12) -> Generator[dict, None, None]:
-    """Download and parse all months in a year, one month at a time (streaming)."""
-    from datetime import datetime
-
-    current = datetime.now()
-    actual_end = end_month
-    if year == current.year:
-        actual_end = min(end_month, current.month)
-    if year > current.year:
         return
 
-    months = list(range(start_month, actual_end + 1))
-    total = len(months)
-    logger.info("YEAR %d: streaming %d months [%02d–%02d] sequentially", year, total, start_month, actual_end)
+    logger.info("MONTH %d-%02d complete: %d files uploaded, %d total rows", year, month, uploaded, total_rows)
 
-    failed = []
-    completed = 0
-    total_rows = 0
 
-    for mn in months:
-        try:
-            logger.info("MONTH %d-%02d: starting [%d/%d]", year, mn, completed + 1, total)
-            rows = _download_and_extract(year, mn)
-            yielded = 0
-            for row in rows:
-                yield row
-                yielded += 1
-            total_rows += yielded
-            completed += 1
-            logger.info("MONTH %d-%02d OK: %d rows yielded [%d/%d months done]", year, mn, yielded, completed, total)
-        except Exception:
-            logger.exception("MONTH %d-%02d FAILED", year, mn)
-            failed.append(mn)
-            completed += 1
-            logger.info("MONTH %d-%02d FAILED: skipped [%d/%d months done]", year, mn, completed, total)
-
-    logger.info(
-        "YEAR %d SUMMARY: %d/%d months OK, %d failed, %d total rows",
-        year,
-        total - len(failed),
-        total,
-        len(failed),
-        total_rows,
-    )

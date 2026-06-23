@@ -3,7 +3,7 @@ import logging
 import dlt
 import pendulum
 
-from utils.aemo import _download_and_extract
+from utils.aemo import iter_month_files
 
 logger = logging.getLogger(__name__)
 
@@ -37,18 +37,25 @@ def run_demand_pipeline(year: int) -> None:
         return
 
     for month in range(1, end_month + 1):
-        logger.info("MONTH %d-%02d: DLT pipeline run starting ...", year, month)
-        rows = _download_and_extract(year, month)
-        if not rows:
-            logger.info("MONTH %d-%02d: no rows, skipping DLT run", year, month)
-            continue
+        logger.info("MONTH %d-%02d: starting ...", year, month)
+        file_count = 0
+        month_rows = 0
 
-        pipeline.run(
-            (_transform_row(r) for r in rows),
-            table_name="demand",
-            write_disposition="merge",
-            primary_key=("time", "region_id"),
-        )
-        logger.info("MONTH %d-%02d: DLT pipeline done (%d rows)", year, month, len(rows))
+        for file_rows in iter_month_files(year, month):
+            if not file_rows:
+                continue
+            pipeline.run(
+                (_transform_row(r) for r in file_rows),
+                table_name="demand",
+                write_disposition="merge",
+                primary_key=("time", "region_id"),
+            )
+            file_count += 1
+            month_rows += len(file_rows)
+
+        if month_rows == 0:
+            logger.info("MONTH %d-%02d: no rows, skipping", year, month)
+        else:
+            logger.info("MONTH %d-%02d: DLT done (%d files, %d rows)", year, month, file_count, month_rows)
 
     logger.info("PIPELINE: demand_aemo completed for year %d", year)
