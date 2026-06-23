@@ -160,7 +160,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
 
     volumes:
-      - ./configs/debezium:/debezium/conf:ro
+      - ./configs/debezium:/debezium/config:ro
       - ./storage/debezium:/debezium/data
     depends_on:
       postgres:
