@@ -36,17 +36,11 @@ def _get_s3():
     return s3_client
 
 
-def _s3_key(year: int, month: int) -> str:
-    return f"MMSDM/{year}/{month:02d}.csv"
-
-
-def _upload_csv(content: str, year: int, month: int) -> str:
+def _upload_csv(content: str, key: str) -> None:
     s3 = _get_s3()
-    key = _s3_key(year, month)
     body = content.encode("utf-8")
     s3.put_object(Bucket=S3_BUCKET, Key=key, Body=body)
     logger.info("S3 PUT: s3://%s/%s (%d bytes) uploaded", S3_BUCKET, key, len(body))
-    return key
 
 
 def _parse_dispatch_csv(csv_text: str) -> list[dict]:
@@ -75,7 +69,7 @@ def _parse_dispatch_csv(csv_text: str) -> list[dict]:
 
 
 def _download_and_extract(year: int, month: int) -> list[dict]:
-    """Download ZIP, extract DISPATCHDEMAND CSVs, upload combined CSV to S3."""
+    """Download ZIP, extract DISPATCHDEMAND CSVs, upload each filtered CSV to S3."""
     url = f"{NEMWEB_BASE}/{year}/MMSDM_{year}_{month:02d}.zip"
     logger.info("DOWNLOAD: Starting %s", url)
 
@@ -91,6 +85,7 @@ def _download_and_extract(year: int, month: int) -> list[dict]:
 
     all_rows = []
     dispatch_csvs = []
+    uploaded = 0
 
     with zipfile.ZipFile(tmp_zip) as zf:
         for name in sorted(zf.namelist()):
@@ -111,8 +106,16 @@ def _download_and_extract(year: int, month: int) -> list[dict]:
                 rows = _parse_dispatch_csv(csv_text)
                 logger.info("PARSED: %s → %d valid rows", name, len(rows))
                 all_rows.extend(rows)
+
+                s3_key = f"MMSDM/{year}/{month:02d}/{Path(name).name}"
+                buf = io.StringIO()
+                writer = csv.DictWriter(buf, fieldnames=["time", "region_id", "total_demand"])
+                writer.writeheader()
+                writer.writerows(rows)
+                _upload_csv(buf.getvalue(), s3_key)
+                uploaded += 1
             except Exception:
-                logger.exception("FAILED: parse %s in ZIP", name)
+                logger.exception("FAILED: parse/upload %s in ZIP", name)
 
     tmp_zip.unlink()
 
@@ -120,15 +123,7 @@ def _download_and_extract(year: int, month: int) -> list[dict]:
         logger.warning("SKIP: no DISPATCHDEMAND rows found for %d-%02d", year, month)
         return []
 
-    combined = io.StringIO()
-    writer = csv.DictWriter(combined, fieldnames=["time", "region_id", "total_demand"])
-    writer.writeheader()
-    writer.writerows(all_rows)
-
-    payload = combined.getvalue()
-    logger.info("STORE: uploading combined CSV (%d rows, %d bytes) → s3://%s/%s ...", len(all_rows), len(payload), S3_BUCKET, _s3_key(year, month))
-    _upload_csv(payload, year, month)
-    logger.info("STORED: month %d-%02d complete → %d rows persisted", year, month, len(all_rows))
+    logger.info("MONTH %d-%02d complete: %d files uploaded, %d total rows", year, month, uploaded, len(all_rows))
     return all_rows
 
 
