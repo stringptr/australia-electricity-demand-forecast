@@ -1,6 +1,11 @@
+"""Entry point for the realtime demand pipeline (OpenElectricity)."""
+
+import os
 import time
 import logging
 import signal
+
+import psycopg2
 
 from pipelines.demand_aemo_realtime import run_realtime_pipeline
 
@@ -20,7 +25,7 @@ running = True
 
 def _signal_handler(sig, frame):
     global running
-    logger.info("Signal %s received, shutting down gracefully", sig)
+    logger.info("Signal %s received, shutting down", sig)
     running = False
 
 
@@ -28,7 +33,39 @@ signal.signal(signal.SIGINT, _signal_handler)
 signal.signal(signal.SIGTERM, _signal_handler)
 
 
+def _wait_for_backfill():
+    """Block startup until bronze.demand has recent data (backfill done)."""
+    conn = psycopg2.connect(
+        host=os.getenv("PGHOST", "postgres"),
+        port=os.getenv("PGPORT", "5432"),
+        dbname=os.getenv("POSTGRES_DB", "electricity"),
+        user=os.getenv("POSTGRES_USER", "postgres"),
+        password=os.getenv("POSTGRES_PASSWORD", "postgres"),
+    )
+
+    logger.info("WAIT: checking bronze.demand for backfill data ...")
+    try:
+        while running:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT COUNT(*) FROM bronze.demand WHERE time >= NOW() - INTERVAL '1 hour'"
+            )
+            count = cur.fetchone()[0]
+            cur.close()
+
+            if count > 0:
+                logger.info("Backfill confirmed: %d rows in last hour", count)
+                return
+
+            logger.info("No recent data yet, retrying in 60s ...")
+            time.sleep(60)
+    finally:
+        conn.close()
+
+
 def main() -> None:
+    _wait_for_backfill()
+
     next_fetch_at = time.time()
     daily_req = 0
     last_reset_day = time.localtime().tm_yday
@@ -44,7 +81,7 @@ def main() -> None:
             logger.info("Daily request counter reset")
 
         if daily_req >= DAILY_LIMIT:
-            logger.warning("Daily limit reached (%d/%d), sleeping 10min", daily_req, DAILY_LIMIT)
+            logger.warning("Daily limit reached (%d/%d), pausing", daily_req, DAILY_LIMIT)
             time.sleep(600)
             continue
 
@@ -63,7 +100,7 @@ def main() -> None:
             continue
 
         if has_new:
-            logger.info("DATA OK: reset to %ds schedule", NORMAL_INTERVAL)
+            logger.info("DATA OK: next fetch in %ds", NORMAL_INTERVAL)
             next_fetch_at = time.time() + NORMAL_INTERVAL
         else:
             retry_deadline = time.time() + NORMAL_INTERVAL
@@ -73,7 +110,7 @@ def main() -> None:
 
                 retry_in = min(RETRY_INTERVAL, retry_deadline - time.time())
                 logger.info("RETRY in %ds (window: %ds left, req #%d today)",
-                            retry_in, retry_deadline - time.time(), daily_req + 1)
+                            retry_in, int(retry_deadline - time.time()), daily_req + 1)
                 time.sleep(retry_in)
 
                 daily_req += 1

@@ -9,12 +9,12 @@ from pipelines.weather_openmeteo import run_weather_pipeline
 
 
 @asset(
-    description="AEMO NEMWeb 5-min DISPATCHDEMAND → bronze.demand",
+    description="OpenElectricity 5-min demand → bronze.demand",
     group_name="bronze",
 )
 def demand_5min_asset(context: AssetExecutionContext) -> None:
     year = int(context.partition_key)
-    context.log.info("Loading AEMO demand data for year %d", year)
+    context.log.info("Loading OpenElectricity demand data for year %d", year)
     run_demand_pipeline(year)
 
 

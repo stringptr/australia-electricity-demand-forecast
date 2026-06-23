@@ -7,7 +7,8 @@ RUN pip install --no-cache-dir \
   "dlt[postgres]" \
   dbt-postgres \
   boto3 \
-  httpx
+  httpx \
+  openelectricity
 
 RUN mkdir -p /opt/dagster/app /opt/dagster/dlt /opt/dagster/dbt
 

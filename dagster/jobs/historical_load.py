@@ -43,16 +43,16 @@ def load_demand_op(context) -> None:
 
     loggers = [
         logging.getLogger("pipelines.demand_aemo"),
-        logging.getLogger("utils.aemo"),
+        logging.getLogger("utils.openelectricity"),
     ]
     for lg in loggers:
         lg.addHandler(handler)
         lg.setLevel(logging.INFO)
 
     try:
-        context.log.info("Starting AEMO demand load for year %d", year)
+        context.log.info("Starting OpenElectricity demand load for year %d", year)
         run_demand_pipeline(year)
-        context.log.info("AEMO demand load complete for year %d", year)
+        context.log.info("OpenElectricity demand load complete for year %d", year)
     finally:
         for lg in loggers:
             lg.removeHandler(handler)

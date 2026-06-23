@@ -10,24 +10,9 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE SCHEMA IF NOT EXISTS bronze;
     CREATE SCHEMA IF NOT EXISTS silver;
 
-    -- Bronze: raw data as JSONB
-    CREATE TABLE IF NOT EXISTS bronze.weather (
-        id BIGSERIAL PRIMARY KEY,
-        time TIMESTAMPTZ NOT NULL,
-        region_id VARCHAR(10) NOT NULL,
-        raw_payload JSONB NOT NULL,
-        ingested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        UNIQUE (time, region_id)
-    );
-
-    CREATE TABLE IF NOT EXISTS bronze.demand (
-        id BIGSERIAL PRIMARY KEY,
-        time TIMESTAMPTZ NOT NULL,
-        region_id VARCHAR(10) NOT NULL,
-        raw_payload JSONB NOT NULL,
-        ingested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        UNIQUE (time, region_id)
-    );
+    -- Bronze tables are created/managed by DLT at runtime.
+    -- Weather still uses raw_payload JSONB.
+    -- Demand now uses flat columns (time, region_id, demand_mw).
 
     -- Silver: clean, typed, no NULLs on key columns
     CREATE TABLE IF NOT EXISTS silver.demand_hourly (
