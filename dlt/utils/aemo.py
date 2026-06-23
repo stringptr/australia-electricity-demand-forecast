@@ -3,8 +3,8 @@ import io
 import csv
 import zipfile
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from typing import Generator
 
 import boto3
 import httpx
@@ -18,7 +18,6 @@ S3_BUCKET = os.getenv("S3_BUCKET", "aemo-nemweb")
 S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY", "aemo-key-id")
 S3_SECRET_KEY = os.getenv("S3_SECRET_KEY", "aemo-secret-key")
 S3_REGION = os.getenv("S3_REGION", "us-east-1")
-MAX_WORKERS = 4
 TMP_DIR = Path("/tmp/aemo")
 
 s3_client = None
@@ -133,8 +132,8 @@ def _download_and_extract(year: int, month: int) -> list[dict]:
     return all_rows
 
 
-def process_year(year: int, start_month: int = 1, end_month: int = 12) -> list[dict]:
-    """Download and parse all months in a year, parallel download (4 workers)."""
+def process_year(year: int, start_month: int = 1, end_month: int = 12) -> Generator[dict, None, None]:
+    """Download and parse all months in a year, one month at a time (streaming)."""
     from datetime import datetime
 
     current = datetime.now()
@@ -142,30 +141,32 @@ def process_year(year: int, start_month: int = 1, end_month: int = 12) -> list[d
     if year == current.year:
         actual_end = min(end_month, current.month)
     if year > current.year:
-        return []
+        return
 
     months = list(range(start_month, actual_end + 1))
     total = len(months)
-    logger.info("YEAR %d: processing %d months [%02d–%02d] with %d parallel workers", year, total, start_month, actual_end, MAX_WORKERS)
+    logger.info("YEAR %d: streaming %d months [%02d–%02d] sequentially", year, total, start_month, actual_end)
 
-    all_rows = []
     failed = []
     completed = 0
+    total_rows = 0
 
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        future_map = {executor.submit(_download_and_extract, year, mn): mn for mn in months}
-        for future in as_completed(future_map):
-            mn = future_map[future]
-            try:
-                rows = future.result()
-                all_rows.extend(rows)
-                completed += 1
-                logger.info("MONTH %d-%02d OK: %d rows [%d/%d months done]", year, mn, len(rows), completed, total)
-            except Exception:
-                logger.exception("MONTH %d-%02d FAILED", year, mn)
-                failed.append(mn)
-                completed += 1
-                logger.info("MONTH %d-%02d FAILED: skipped [%d/%d months done]", year, mn, completed, total)
+    for mn in months:
+        try:
+            logger.info("MONTH %d-%02d: starting [%d/%d]", year, mn, completed + 1, total)
+            rows = _download_and_extract(year, mn)
+            yielded = 0
+            for row in rows:
+                yield row
+                yielded += 1
+            total_rows += yielded
+            completed += 1
+            logger.info("MONTH %d-%02d OK: %d rows yielded [%d/%d months done]", year, mn, yielded, completed, total)
+        except Exception:
+            logger.exception("MONTH %d-%02d FAILED", year, mn)
+            failed.append(mn)
+            completed += 1
+            logger.info("MONTH %d-%02d FAILED: skipped [%d/%d months done]", year, mn, completed, total)
 
     logger.info(
         "YEAR %d SUMMARY: %d/%d months OK, %d failed, %d total rows",
@@ -173,6 +174,5 @@ def process_year(year: int, start_month: int = 1, end_month: int = 12) -> list[d
         total - len(failed),
         total,
         len(failed),
-        len(all_rows),
+        total_rows,
     )
-    return all_rows

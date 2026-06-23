@@ -15,9 +15,8 @@ logger = logging.getLogger(__name__)
     merge_key=("time", "region_id"),
 )
 def demand_resource(year: int) -> Generator[dict, None, None]:
-    """DLT resource: AEMO DISPATCHDEMAND rows → bronze.demand."""
-    rows = process_year(year)
-    for row in rows:
+    """DLT resource: AEMO DISPATCHDEMAND rows → bronze.demand (streaming)."""
+    for row in process_year(year):
         yield {
             "time": pendulum.parse(row["time"], tz="Australia/Sydney"),
             "region_id": row["region_id"],

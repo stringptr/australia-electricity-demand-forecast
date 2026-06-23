@@ -1,5 +1,4 @@
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Generator
 
 import httpx
@@ -69,7 +68,7 @@ def _fetch_region(region: dict, start_date: str, end_date: str) -> list[dict]:
 
 
 def fetch_all_regions(year: int) -> Generator[dict, None, None]:
-    """Yield hourly weather rows for all 5 regions in a year (parallel)."""
+    """Yield hourly weather rows for all 5 regions in a year (sequential)."""
     from datetime import datetime
 
     current = datetime.now()
@@ -79,25 +78,21 @@ def fetch_all_regions(year: int) -> Generator[dict, None, None]:
         end_date = current.strftime("%Y-%m-%d")
 
     total_regions = len(REGIONS)
-    logger.info("YEAR %d: fetching weather for %d regions [%s → %s] with 5 parallel workers", year, total_regions, start_date, end_date)
+    logger.info("YEAR %d: fetching weather for %d regions [%s → %s] sequentially", year, total_regions, start_date, end_date)
     completed = 0
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        future_map = {
-            executor.submit(_fetch_region, region, start_date, end_date): region["id"]
-            for region in REGIONS
-        }
-        for future in as_completed(future_map):
-            region_id = future_map[future]
-            try:
-                rows = future.result()
-                completed += 1
-                total_yielded = 0
-                for row in rows:
-                    yield row
-                    total_yielded += 1
-                logger.info("REGION %s OK: %d rows yielded [%d/%d regions done]", region_id, total_yielded, completed, total_regions)
-            except Exception:
-                logger.exception("REGION %s FAILED year %d", region_id, year)
-                completed += 1
-                logger.info("REGION %s FAILED: skipped [%d/%d regions done]", region_id, completed, total_regions)
+    for region in REGIONS:
+        region_id = region["id"]
+        try:
+            logger.info("REGION %s: starting [%d/%d]", region_id, completed + 1, total_regions)
+            rows = _fetch_region(region, start_date, end_date)
+            yielded = 0
+            for row in rows:
+                yield row
+                yielded += 1
+            completed += 1
+            logger.info("REGION %s OK: %d rows yielded [%d/%d regions done]", region_id, yielded, completed, total_regions)
+        except Exception:
+            logger.exception("REGION %s FAILED year %d", region_id, year)
+            completed += 1
+            logger.info("REGION %s FAILED: skipped [%d/%d regions done]", region_id, completed, total_regions)
