@@ -35,5 +35,6 @@ def run_demand_pipeline(year: int) -> None:
         destination="postgres",
         dataset_name="bronze",
     )
+    logger.info("PIPELINE: demand_aemo starting DLT run for year %d → bronze.demand", year)
     info = pipeline.run(demand_resource(year))
-    logger.info("Demand pipeline completed: %s", info)
+    logger.info("PIPELINE: demand_aemo completed for year %d: %s", year, info)

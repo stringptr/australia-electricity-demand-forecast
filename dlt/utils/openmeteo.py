@@ -37,14 +37,18 @@ def _fetch_region(region: dict, start_date: str, end_date: str) -> list[dict]:
         "timezone": region["tz"],
     }
 
+    logger.info("FETCH: weather for %s (%s) [lat=%.2f, lon=%.2f] from %s to %s", region["id"], region["name"], region["lat"], region["lon"], start_date, end_date)
+
     with httpx.Client(timeout=httpx.Timeout(120)) as client:
         resp = client.get(ARCHIVE_API, params=params)
         resp.raise_for_status()
 
+    logger.info("FETCHED: %s → HTTP %d, %d bytes received", region["id"], resp.status_code, len(resp.content))
+
     data = resp.json()
     hourly = data.get("hourly", {})
     if not hourly:
-        logger.warning("No hourly data for %s (%s to %s)", region["id"], start_date, end_date)
+        logger.warning("EMPTY: no hourly data for %s (%s to %s)", region["id"], start_date, end_date)
         return []
 
     times = hourly.get("time", [])
@@ -60,7 +64,7 @@ def _fetch_region(region: dict, start_date: str, end_date: str) -> list[dict]:
             row[param] = val
         rows.append(row)
 
-    logger.info("Fetched %s: %d hourly rows (%s to %s)", region["id"], len(rows), start_date, end_date)
+    logger.info("PARSED: %s → %d hourly rows [%.1f%% of year]", region["id"], len(rows), 100 * len(rows) / 8760 if len(rows) <= 8760 else 0)
     return rows
 
 
@@ -74,6 +78,10 @@ def fetch_all_regions(year: int) -> Generator[dict, None, None]:
     if year == current.year:
         end_date = current.strftime("%Y-%m-%d")
 
+    total_regions = len(REGIONS)
+    logger.info("YEAR %d: fetching weather for %d regions [%s → %s] with 5 parallel workers", year, total_regions, start_date, end_date)
+    completed = 0
+
     with ThreadPoolExecutor(max_workers=5) as executor:
         future_map = {
             executor.submit(_fetch_region, region, start_date, end_date): region["id"]
@@ -83,6 +91,13 @@ def fetch_all_regions(year: int) -> Generator[dict, None, None]:
             region_id = future_map[future]
             try:
                 rows = future.result()
-                yield from rows
+                completed += 1
+                total_yielded = 0
+                for row in rows:
+                    yield row
+                    total_yielded += 1
+                logger.info("REGION %s OK: %d rows yielded [%d/%d regions done]", region_id, total_yielded, completed, total_regions)
             except Exception:
-                logger.exception("Failed to fetch weather for %s year %d", region_id, year)
+                logger.exception("REGION %s FAILED year %d", region_id, year)
+                completed += 1
+                logger.info("REGION %s FAILED: skipped [%d/%d regions done]", region_id, completed, total_regions)

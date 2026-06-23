@@ -43,5 +43,6 @@ def run_weather_pipeline(year: int) -> None:
         destination="postgres",
         dataset_name="bronze",
     )
+    logger.info("PIPELINE: weather_openmeteo starting DLT run for year %d → bronze.weather", year)
     info = pipeline.run(weather_resource(year))
-    logger.info("Weather pipeline completed: %s", info)
+    logger.info("PIPELINE: weather_openmeteo completed for year %d: %s", year, info)

@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, "/opt/dagster/dlt")
 
-from dagster import StaticPartitionsDefinition, job, op
+from dagster import StaticPartitionsDefinition, in_process_executor, job, op
 
 partitions = StaticPartitionsDefinition(["2026"])
 
@@ -41,6 +41,7 @@ def dbt_run_op(context) -> None:
 
 @job(
     partitions_def=partitions,
+    executor_def=in_process_executor,
     description="Historical backfill: DLT bronze → DBT silver",
 )
 def historical_backfill() -> None:
