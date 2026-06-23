@@ -13,7 +13,7 @@ WEATHER_FIELDS = [
     "precipitation",
     "cloud_cover",
     "wind_speed_10m",
-    "shortwave_radiation_sum",
+    "shortwave_radiation",
 ]
 
 

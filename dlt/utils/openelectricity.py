@@ -52,13 +52,11 @@ def fetch_demand_chunk(date_start: datetime, date_end: datetime) -> list[dict]:
                     from pendulum import timezone
 
                     dt = dt.replace(tzinfo=timezone("Australia/Sydney"))
-                rows.append(
-                    {
-                        "time": dt,
-                        "region_id": region_id,
-                        "demand_mw": float(value) if value is not None else None,
-                    }
-                )
+                rows.append({
+                    "time": dt,
+                    "region_id": region_id,
+                    "demand_mw": float(value) if value is not None else None,
+                })
     return rows
 
 
