@@ -24,3 +24,4 @@ compute_logs:
   class: LocalComputeLogManager
   config:
     base_dir: /opt/dagster/dagster_home/logs
+
