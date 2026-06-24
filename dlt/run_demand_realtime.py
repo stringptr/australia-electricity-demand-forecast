@@ -57,7 +57,7 @@ def _wait_for_backfill():
                 logger.info("Backfill confirmed: %d rows in last hour", count)
                 return
 
-            logger.info("No recent data yet, retrying in 60s ...")
+            logger.info("No recent data yet, retrying in 10s ...")
             time.sleep(10)
     finally:
         conn.close()

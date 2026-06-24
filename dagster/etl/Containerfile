@@ -8,7 +8,17 @@ RUN pip install --no-cache-dir \
   dbt-postgres \
   boto3 \
   httpx \
-  openelectricity
+  openelectricity \
+  xgboost \
+  scikit-learn \
+  mlflow \
+  pandas \
+  numpy \
+  matplotlib \
+  seaborn \
+  joblib \
+  psycopg2-binary \
+  sqlalchemy
 
 RUN mkdir -p /opt/dagster/app /opt/dagster/dlt /opt/dagster/dbt
 
