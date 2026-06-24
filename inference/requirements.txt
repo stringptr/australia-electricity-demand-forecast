@@ -1,0 +1,10 @@
+xgboost
+scikit-learn
+pandas
+numpy
+mlflow
+boto3
+psycopg2-binary
+sqlalchemy
+nats-py
+httpx

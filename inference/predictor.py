@@ -1,0 +1,52 @@
+import logging
+from datetime import datetime, timezone
+
+import pandas as pd
+from xgboost import XGBRegressor
+
+from .config import HISTORY_LOOKBACK_HOURS, REGIONS
+from .features import assemble_feature_matrix
+from .forecast import fetch_forecast_all_regions
+from .store import fetch_demand_history, store_predictions
+
+logger = logging.getLogger(__name__)
+
+
+def run_inference_cycle(
+    models: dict[str, XGBRegressor], trigger_time: datetime
+) -> None:
+    if trigger_time.tzinfo is None:
+        trigger_time = trigger_time.replace(tzinfo=timezone.utc)
+
+    current_time = pd.Timestamp(trigger_time)
+
+    logger.info("=== Inference cycle: %s ===", current_time)
+
+    history = fetch_demand_history(current_time, HISTORY_LOOKBACK_HOURS)
+    if history.empty:
+        logger.warning("No demand history available, skipping")
+        return
+
+    forecast_df = fetch_forecast_all_regions()
+    if forecast_df.empty:
+        logger.warning("No forecast available, skipping")
+        return
+
+    X = assemble_feature_matrix(history, forecast_df, current_time)
+    logger.info("Feature matrix: %s", X.shape)
+
+    predictions = {}
+    for idx, region_id in enumerate(REGIONS):
+        model = models.get(region_id)
+        if model is None:
+            logger.warning("Model not loaded for %s", region_id)
+            continue
+
+        pred = model.predict(X[idx : idx + 1])[0]
+        predictions[region_id] = pred.tolist()
+        logger.info("  %s: %s...%s MW", region_id,
+                     ", ".join(f"{v:.0f}" for v in pred[:3]),
+                     ", ".join(f"{v:.0f}" for v in pred[-2:]))
+
+    store_predictions(predictions, current_time)
+    logger.info("=== Inference done ===")

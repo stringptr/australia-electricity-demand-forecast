@@ -63,4 +63,35 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         PRIMARY KEY (time, region_id)
     );
+
+    CREATE TABLE IF NOT EXISTS silver.predictions (
+        id           BIGSERIAL PRIMARY KEY,
+        created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        region_id    TEXT NOT NULL,
+        horizon_h01  DOUBLE PRECISION,
+        horizon_h02  DOUBLE PRECISION,
+        horizon_h03  DOUBLE PRECISION,
+        horizon_h04  DOUBLE PRECISION,
+        horizon_h05  DOUBLE PRECISION,
+        horizon_h06  DOUBLE PRECISION,
+        horizon_h07  DOUBLE PRECISION,
+        horizon_h08  DOUBLE PRECISION,
+        horizon_h09  DOUBLE PRECISION,
+        horizon_h10  DOUBLE PRECISION,
+        horizon_h11  DOUBLE PRECISION,
+        horizon_h12  DOUBLE PRECISION,
+        horizon_h13  DOUBLE PRECISION,
+        horizon_h14  DOUBLE PRECISION,
+        horizon_h15  DOUBLE PRECISION,
+        horizon_h16  DOUBLE PRECISION,
+        horizon_h17  DOUBLE PRECISION,
+        horizon_h18  DOUBLE PRECISION,
+        horizon_h19  DOUBLE PRECISION,
+        horizon_h20  DOUBLE PRECISION,
+        horizon_h21  DOUBLE PRECISION,
+        horizon_h22  DOUBLE PRECISION,
+        horizon_h23  DOUBLE PRECISION,
+        horizon_h24  DOUBLE PRECISION,
+        UNIQUE(created_at, region_id)
+    );
 EOSQL

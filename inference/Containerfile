@@ -1,0 +1,18 @@
+FROM python:3.12-slim
+
+RUN pip install --no-cache-dir \
+    xgboost \
+    scikit-learn \
+    pandas \
+    numpy \
+    mlflow \
+    boto3 \
+    psycopg2-binary \
+    sqlalchemy \
+    nats-py \
+    httpx
+
+WORKDIR /app
+COPY inference/ /app/
+
+CMD ["python", "-m", "inference.main"]
