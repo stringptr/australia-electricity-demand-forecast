@@ -36,8 +36,8 @@ signal.signal(signal.SIGTERM, _signal_handler)
 def _wait_for_backfill():
     """Block startup until bronze.demand has recent data (backfill done)."""
     conn = psycopg2.connect(
-        host=os.getenv("PGHOST", "postgres"),
-        port=os.getenv("PGPORT", "5432"),
+        host=os.getenv("POSTGRES_HOST", "postgres"),
+        port=os.getenv("POSTGRES_PORT", "5432"),
         dbname=os.getenv("POSTGRES_DB", "electricity"),
         user=os.getenv("POSTGRES_USER", "postgres"),
         password=os.getenv("POSTGRES_PASSWORD", "postgres"),
@@ -58,7 +58,7 @@ def _wait_for_backfill():
                 return
 
             logger.info("No recent data yet, retrying in 60s ...")
-            time.sleep(60)
+            time.sleep(10)
     finally:
         conn.close()
 
@@ -70,7 +70,9 @@ def main() -> None:
     daily_req = 0
     last_reset_day = time.localtime().tm_yday
 
-    logger.info("START: Open Electricity real-time scraper (daily limit: %d)", DAILY_LIMIT)
+    logger.info(
+        "START: Open Electricity real-time scraper (daily limit: %d)", DAILY_LIMIT
+    )
 
     while running:
         now = time.time()
@@ -81,7 +83,9 @@ def main() -> None:
             logger.info("Daily request counter reset")
 
         if daily_req >= DAILY_LIMIT:
-            logger.warning("Daily limit reached (%d/%d), pausing", daily_req, DAILY_LIMIT)
+            logger.warning(
+                "Daily limit reached (%d/%d), pausing", daily_req, DAILY_LIMIT
+            )
             time.sleep(600)
             continue
 
@@ -109,8 +113,12 @@ def main() -> None:
                     break
 
                 retry_in = min(RETRY_INTERVAL, retry_deadline - time.time())
-                logger.info("RETRY in %ds (window: %ds left, req #%d today)",
-                            retry_in, int(retry_deadline - time.time()), daily_req + 1)
+                logger.info(
+                    "RETRY in %ds (window: %ds left, req #%d today)",
+                    retry_in,
+                    int(retry_deadline - time.time()),
+                    daily_req + 1,
+                )
                 time.sleep(retry_in)
 
                 daily_req += 1
