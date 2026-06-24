@@ -70,7 +70,7 @@ def fetch_demand_range(
         rows = fetch_demand_chunk(current, chunk_end)
         if rows:
             yield rows
-        current = chunk_end + timedelta(days=1)
+        current = chunk_end
 
 
 def fetch_new_data() -> tuple[list[dict], dict | None]:
