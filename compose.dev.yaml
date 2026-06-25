@@ -348,6 +348,36 @@ services:
       - devnet
     profiles: ["dev"]
 
+  inference:
+    build:
+      context: .
+      dockerfile: inference/Containerfile
+    restart: unless-stopped
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_S3_ENDPOINT_URL: http://garage:3900
+      AWS_ACCESS_KEY_ID: mlflow-key-id
+      AWS_SECRET_ACCESS_KEY: mlflow-secret-key
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_S3_FORCE_PATH_STYLE: "true"
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_USER: ${POSTGRES_USER:-postgres}
+      PG_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      PG_DB: ${POSTGRES_DB:-electricity}
+      NATS_URL: nats://nats:4222
+      NATS_SUBJECT: electricity.silver.demand_5min
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mlflow:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    networks:
+      - devnet
+    profiles: ["dev"]
+
   dbt:
     image: ghcr.io/dbt-labs/dbt-postgres:1.9.0
     restart: "no"

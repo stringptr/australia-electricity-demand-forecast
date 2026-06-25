@@ -58,6 +58,10 @@ NATS_SUBJECT = os.environ.get(
     "NATS_SUBJECT", "electricity.silver.demand_5min"
 )
 
+VM_URL = os.environ.get(
+    "VM_URL", "http://victoriametrics:8428/api/v1/import/prometheus"
+)
+
 HISTORY_LOOKBACK_HOURS = 744
 
 OPENMETEO_FORECAST_API = "https://api.open-meteo.com/v1/forecast"

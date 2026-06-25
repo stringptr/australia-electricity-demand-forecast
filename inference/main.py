@@ -2,7 +2,10 @@ import asyncio
 import logging
 import signal
 import threading
+import time
 
+from . import metrics
+from .config import REGIONS
 from .models import load_models
 from .nats_handler import run_nats_loop
 from .predictor import run_inference_cycle
@@ -15,6 +18,21 @@ logging.basicConfig(
 logger = logging.getLogger("inference")
 
 _inference_busy = threading.Lock()
+
+
+def _staleness_loop(stop_event: threading.Event) -> None:
+    while not stop_event.is_set():
+        now = time.time()
+        for region_id in REGIONS:
+            last_ts = metrics.last_demand_time.get(region_id)
+            if last_ts is not None:
+                staleness = now - last_ts
+                metrics.push(
+                    "demand_staleness_seconds",
+                    staleness,
+                    {"region": region_id},
+                )
+        stop_event.wait(timeout=30)
 
 
 async def main() -> None:
@@ -37,7 +55,12 @@ async def main() -> None:
         finally:
             _inference_busy.release()
 
-    stop_event = asyncio.Event()
+    stop_event = threading.Event()
+
+    staleness_thread = threading.Thread(
+        target=_staleness_loop, args=(stop_event,), daemon=True
+    )
+    staleness_thread.start()
 
     def _shutdown():
         logger.info("Received shutdown signal")
@@ -49,7 +72,12 @@ async def main() -> None:
 
     nats_task = asyncio.create_task(run_nats_loop(on_trigger))
 
-    await stop_event.wait()
+    await _async_stop(stop_event, nats_task)
+
+
+async def _async_stop(stop_event: threading.Event, nats_task) -> None:
+    while not stop_event.is_set():
+        await asyncio.sleep(0.5)
     nats_task.cancel()
     try:
         await nats_task
