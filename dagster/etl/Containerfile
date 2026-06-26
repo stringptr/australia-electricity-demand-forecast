@@ -18,7 +18,8 @@ RUN pip install --no-cache-dir \
   seaborn \
   joblib \
   psycopg2-binary \
-  sqlalchemy
+  sqlalchemy \
+  numpy
 
 RUN mkdir -p /opt/dagster/app /opt/dagster/dlt /opt/dagster/dbt
 

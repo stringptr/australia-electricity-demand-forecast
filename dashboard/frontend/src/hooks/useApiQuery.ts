@@ -1,0 +1,67 @@
+import { useCallback, useMemo } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+
+async function fetchJson(url: string) {
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json()
+}
+
+export function useLatestDemand() {
+  return useQuery({
+    queryKey: ['demand', 'latest'],
+    queryFn: () => fetchJson(`${API_BASE}/demand/latest`),
+    refetchInterval: 30000,
+  })
+}
+
+export function useDemandHistory(regionId: string, hours: number = 24) {
+  return useQuery({
+    queryKey: ['demand', 'history', regionId, hours],
+    queryFn: () => fetchJson(`${API_BASE}/demand/history?region_id=${regionId}&hours=${hours}`),
+    enabled: !!regionId,
+  })
+}
+
+export function usePredictions(regionId: string) {
+  return useQuery({
+    queryKey: ['predictions', 'latest', regionId],
+    queryFn: () => fetchJson(`${API_BASE}/predictions/latest?region_id=${regionId}`),
+    enabled: !!regionId,
+  })
+}
+
+export function useAccuracy(regionId: string) {
+  return useQuery({
+    queryKey: ['predictions', 'accuracy', regionId],
+    queryFn: () => fetchJson(`${API_BASE}/predictions/accuracy?region_id=${regionId}`),
+    enabled: !!regionId,
+  })
+}
+
+export function useGlobalMetrics() {
+  return useQuery({
+    queryKey: ['metrics', 'global'],
+    queryFn: () => fetchJson(`${API_BASE}/metrics/global`),
+    refetchInterval: 60000,
+  })
+}
+
+export function useInvalidateQueries() {
+  const queryClient = useQueryClient()
+  
+  const invalidateDemand = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['demand'] })
+  }, [queryClient])
+  
+  const invalidatePredictions = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['predictions'] })
+  }, [queryClient])
+  
+  return useMemo(() => ({
+    invalidateDemand,
+    invalidatePredictions,
+  }), [invalidateDemand, invalidatePredictions])
+}
