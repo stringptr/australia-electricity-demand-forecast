@@ -357,6 +357,8 @@ services:
       NATS_URL: nats://nats:4222
       NATS_SUBJECT: electricity.silver.demand_5min
     depends_on:
+      debezium-server:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       mlflow:
@@ -413,6 +415,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:${POSTGRES_PORT:-5432}/electricity
       VM_URL: http://victoriametrics:8428
     depends_on:
+      debezium-server:
+        condition: service_healthy
       nats:
         condition: service_started
       postgres:
