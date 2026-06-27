@@ -11,7 +11,7 @@ from xgboost import XGBRegressor
 import mlflow
 import mlflow.xgboost
 
-from dagster import InProcessIOManager, in_process_executor, job, op
+from dagster import in_process_executor, job, op
 
 from jobs.preprocessing import (
     MAX_HORIZON,
@@ -260,7 +260,6 @@ def train_models_op(context, split_data: dict) -> None:
 
 
 @job(
-    resource_defs={"io_manager": InProcessIOManager()},
     executor_def=in_process_executor,
     description="Train multi-output XGBoost models (5 regions × 24 horizons) with MLflow tracking",
 )
