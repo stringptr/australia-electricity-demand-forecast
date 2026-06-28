@@ -13,3 +13,8 @@ storage/
 __pycache__/
 *.pyc
 *.pyo
+
+# dbt
+dbt/target/
+dbt/logs/
+dbt/.user.yml
