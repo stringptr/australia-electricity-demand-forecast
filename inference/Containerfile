@@ -13,6 +13,6 @@ RUN pip install --no-cache-dir \
     httpx
 
 WORKDIR /app
-COPY inference/ /app/
+COPY inference/ /app/inference/
 
 CMD ["python", "-m", "inference.main"]
