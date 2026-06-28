@@ -95,7 +95,7 @@ services:
     profiles: ["dev"]
 
   victoriametrics:
-    image: victoriametrics/victoria-metrics:v1.145.0
+    image: docker.io/victoriametrics/victoria-metrics:v1.146.0
     restart: unless-stopped
     ports:
       - ${HOST_IP:-127.0.0.1}:8428:8428
