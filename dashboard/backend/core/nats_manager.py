@@ -48,38 +48,45 @@ class ConnectionManager:
                         self.active_connections.remove(conn)
     
     async def start_nats_consumer(self):
-        """Subscribe to NATS JetStream and broadcast to all WS clients."""
+        """Subscribe to NATS JetStream and broadcast to all WS clients.
+        Does not raise on failure — retries in background so the app stays up."""
         try:
             self.nats_client = await nats.connect(settings.NATS_URL)
-            js = self.nats_client.jetstream()
-            
-            async def msg_handler(msg):
-                try:
-                    data = json.loads(msg.data)
-                    payload = data.get("payload", {}).get("after", {})
-                    if not payload:
-                        await msg.ack()
-                        return
-                    
-                    region_id = payload.get("region_id")
-                    demand_mw = payload.get("demand_mw")
-                    raw_time = payload.get("time")
-                    
-                    if not region_id or demand_mw is None:
-                        await msg.ack()
-                        return
-                    
-                    await self.broadcast({
-                        "type": "demand_update",
-                        "timestamp": raw_time,
-                        "region_id": region_id,
-                        "demand_mw": float(demand_mw)
-                    })
+        except Exception as e:
+            logger.warning("Cannot connect to NATS (%s). Will retry in background.", e)
+            asyncio.create_task(self._retry_connect())
+            return
+
+        js = self.nats_client.jetstream()
+
+        async def msg_handler(msg):
+            try:
+                data = json.loads(msg.data)
+                payload = data.get("payload", {}).get("after", {})
+                if not payload:
                     await msg.ack()
-                except Exception as e:
-                    logger.error("Error handling NATS message: %s", e)
-                    await msg.nak()
-            
+                    return
+
+                region_id = payload.get("region_id")
+                demand_mw = payload.get("demand_mw")
+                raw_time = payload.get("time")
+
+                if not region_id or demand_mw is None:
+                    await msg.ack()
+                    return
+
+                await self.broadcast({
+                    "type": "demand_update",
+                    "timestamp": raw_time,
+                    "region_id": region_id,
+                    "demand_mw": float(demand_mw)
+                })
+                await msg.ack()
+            except Exception as e:
+                logger.error("Error handling NATS message: %s", e)
+                await msg.nak()
+
+        try:
             self.nats_subscription = await js.subscribe(
                 settings.NATS_SUBJECT,
                 cb=msg_handler,
@@ -87,9 +94,37 @@ class ConnectionManager:
                 deliver_policy=nats.js.api.DeliverPolicy.ALL
             )
             logger.info("Subscribed to NATS subject: %s", settings.NATS_SUBJECT)
+        except nats.js.errors.NotFoundError:
+            logger.warning("NATS stream not found yet. Will retry in background.")
+            asyncio.create_task(self._retry_subscribe(js, msg_handler))
         except Exception as e:
-            logger.error("Failed to start NATS consumer: %s", e)
-            raise
+            logger.warning("NATS subscribe failed (%s). Will retry in background.", e)
+            asyncio.create_task(self._retry_connect())
+
+    async def _retry_connect(self):
+        await asyncio.sleep(30)
+        try:
+            await self.start_nats_consumer()
+        except Exception:
+            logger.warning("NATS reconnect failed, scheduling another attempt.")
+            asyncio.create_task(self._retry_connect())
+
+    async def _retry_subscribe(self, js, msg_handler):
+        await asyncio.sleep(30)
+        try:
+            self.nats_subscription = await js.subscribe(
+                settings.NATS_SUBJECT,
+                cb=msg_handler,
+                durable="dashboard-consumer",
+                deliver_policy=nats.js.api.DeliverPolicy.ALL
+            )
+            logger.info("Subscribed to NATS subject (on retry): %s", settings.NATS_SUBJECT)
+        except nats.js.errors.NotFoundError:
+            logger.warning("NATS stream still not found. Will retry again.")
+            asyncio.create_task(self._retry_subscribe(js, msg_handler))
+        except Exception:
+            logger.warning("NATS subscribe failed on retry. Reconnecting from scratch.")
+            asyncio.create_task(self._retry_connect())
     
     async def stop_nats_consumer(self):
         if self.nats_subscription:
