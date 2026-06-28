@@ -1,0 +1,11 @@
+:80 {
+    handle {
+      reverse_proxy dashboard-frontend:5173
+    }
+}
+
+:433 {
+    handle {
+      reverse_proxy dashboard-frontend:5173
+    }
+}

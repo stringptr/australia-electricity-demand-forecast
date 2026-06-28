@@ -13,11 +13,11 @@ run_launcher:
 storage:
   postgres:
     postgres_db:
-      username: { env: DAGSTER_POSTGRES_USER }
-      password: { env: DAGSTER_POSTGRES_PASSWORD }
-      hostname: { env: DAGSTER_POSTGRES_HOST }
-      db_name: { env: DAGSTER_POSTGRES_DB }
-      port: { env: DAGSTER_POSTGRES_PORT }
+      username: {env: DAGSTER_POSTGRES_USER}
+      password: {env: DAGSTER_POSTGRES_PASSWORD}
+      hostname: {env: DAGSTER_POSTGRES_HOST}
+      db_name: {env: DAGSTER_POSTGRES_DB}
+      port: {env: DAGSTER_POSTGRES_PORT}
 
 compute_logs:
   module: dagster.core.storage.local_compute_log_manager
@@ -25,3 +25,5 @@ compute_logs:
   config:
     base_dir: /opt/dagster/dagster_home/logs
 
+telemetry:
+  enabled: false

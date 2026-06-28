@@ -466,10 +466,24 @@ services:
       args:
         VITE_API_BASE_URL: http://localhost:8000
     restart: unless-stopped
-    ports:
-      - ${HOST_IP:-127.0.0.1}:5173:80
     depends_on:
       dashboard-backend:
+        condition: service_started
+    networks:
+      - devnet
+    profiles: ["dev"]
+
+  dashboard-webserver:
+    build:
+      context: ./dashboard/webserver
+      dockerfile: Containerfile
+    restart: unless-stopped
+    ports:
+      - ${HOST_IP:-127.0.0.1}:5173:80
+    volumes:
+      - ./configs/dashboard/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      dashboard-frontend:
         condition: service_started
     networks:
       - devnet
