@@ -145,6 +145,33 @@ services:
       - devnet
     profiles: ["dev"]
 
+  nats-init:
+    image: docker.io/natsio/nats-box:latest
+    restart: "no"
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        echo "Waiting for NATS..."
+        until nc -z nats 4222; do sleep 1; done
+        echo "Creating stream 'demand_5min'..."
+        nats -s nats:4222 stream info demand_5min >/dev/null 2>&1 || \
+          nats -s nats:4222 stream add demand_5min \
+            --defaults \
+            --subjects electricity.silver.demand_5min \
+            --storage file \
+            --retention limits \
+            --max-msgs=-1 \
+            --max-age 7d \
+            --allow-rollup \
+            --dupe-window 2m
+        echo "NATS init complete"
+    depends_on:
+      nats:
+        condition: service_started
+    networks:
+      - devnet
+    profiles: ["dev"]
+
   debezium-server:
     image: docker.io/debezium/server:3.0.0.Final
     restart: unless-stopped
@@ -365,6 +392,8 @@ services:
         condition: service_healthy
       nats:
         condition: service_started
+      nats-init:
+        condition: service_completed_successfully
     networks:
       - devnet
     profiles: ["dev"]
@@ -419,6 +448,8 @@ services:
         condition: service_healthy
       nats:
         condition: service_started
+      nats-init:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       victoriametrics:
