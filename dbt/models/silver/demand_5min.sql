@@ -6,15 +6,15 @@
 }}
 
 SELECT
-    (raw_payload->>'SETTLEMENTDATE')::TIMESTAMPTZ AS time,
-    (raw_payload->>'REGIONID')::VARCHAR(10) AS region_id,
-    (raw_payload->>'TOTALDEMAND')::NUMERIC AS demand_mw,
+    time,
+    region_id,
+    demand_mw,
     NOW() AS updated_at
 FROM {{ source('bronze', 'demand') }}
-WHERE raw_payload->>'TOTALDEMAND' IS NOT NULL
-  AND raw_payload->>'SETTLEMENTDATE' IS NOT NULL
-  AND (raw_payload->>'REGIONID') IN ('NSW1', 'QLD1', 'SA1', 'TAS1', 'VIC1')
+WHERE demand_mw IS NOT NULL
+  AND time IS NOT NULL
+  AND region_id IN ('NSW1', 'QLD1', 'SA1', 'TAS1', 'VIC1')
 
 {% if is_incremental() %}
-  AND (raw_payload->>'SETTLEMENTDATE')::TIMESTAMPTZ > (SELECT COALESCE(MAX(time), '1900-01-01') FROM {{ this }})
+  AND time > (SELECT COALESCE(MAX(time), '1900-01-01') FROM {{ this }})
 {% endif %}

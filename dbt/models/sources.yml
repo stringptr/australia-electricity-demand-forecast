@@ -6,3 +6,7 @@ sources:
     tables:
       - name: demand
       - name: weather
+  - name: silver
+    schema: silver
+    tables:
+      - name: predictions

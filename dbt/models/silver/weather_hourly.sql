@@ -13,7 +13,7 @@ SELECT
     COALESCE((raw_payload->>'precipitation')::NUMERIC, 0) AS precipitation,
     COALESCE((raw_payload->>'cloud_cover')::NUMERIC, 0) AS cloud_cover,
     (raw_payload->>'wind_speed_10m')::NUMERIC AS wind_speed_10m,
-    COALESCE((raw_payload->>'shortwave_radiation_sum')::NUMERIC, 0) AS shortwave_radiation,
+    COALESCE((raw_payload->>'shortwave_radiation')::NUMERIC, 0) AS shortwave_radiation,
     NOW() AS updated_at
 FROM {{ source('bronze', 'weather') }}
 WHERE raw_payload->>'temperature_2m' IS NOT NULL
