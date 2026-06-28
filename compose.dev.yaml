@@ -215,6 +215,9 @@ services:
       DBT_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       DBT_DB: ${POSTGRES_DB:-electricity}
       DLT_PROJECT_DIR: /opt/dagster/dlt
+      OPENELECTRICITY_API_KEY: ${OPENELECTRICITY_API_KEY:?err_OPENELECTRICITY_API_KEY_not_set_in_env}
+    env_file:
+      - .env
     volumes:
       - ./dagster:/opt/dagster/app
       - ./dlt:/opt/dagster/dlt
