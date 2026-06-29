@@ -12,9 +12,12 @@ interface VoltaicMapProps {
   onHoverRegion: (id: string | null, demand: number) => void
 }
 
+const defaultView = { center: [134, -28] as [number, number], zoom: 4 }
+
 const VoltaicMap: React.FC<VoltaicMapProps> = ({
   latestDemand,
   gradientMax,
+  selectedRegion,
   onSelectRegion,
   onHoverRegion,
 }) => {
@@ -51,8 +54,8 @@ const VoltaicMap: React.FC<VoltaicMapProps> = ({
           },
         ],
       },
-      center: [134, -28],
-      zoom: 4,
+      center: defaultView.center,
+      zoom: defaultView.zoom,
       pitch: 0,
       bearing: 0,
     })
@@ -60,13 +63,11 @@ const VoltaicMap: React.FC<VoltaicMapProps> = ({
     mapRef.current = map
 
     map.on('load', () => {
-      // Add Australia states source
       map.addSource('australia-states', {
         type: 'geojson',
         data: australiaStates as any,
       })
 
-      // Fill layer
       map.addLayer({
         id: 'states-fill',
         type: 'fill',
@@ -77,7 +78,6 @@ const VoltaicMap: React.FC<VoltaicMapProps> = ({
         },
       })
 
-      // Border layer - wireframe tactical
       map.addLayer({
         id: 'states-border',
         type: 'line',
@@ -88,7 +88,6 @@ const VoltaicMap: React.FC<VoltaicMapProps> = ({
         },
       })
 
-      // Hover highlight
       map.addLayer({
         id: 'states-hover',
         type: 'line',
@@ -100,24 +99,17 @@ const VoltaicMap: React.FC<VoltaicMapProps> = ({
         filter: ['==', ['get', 'id'], ''],
       })
 
-      // Update demand data
       updateDemandData(map, latestDemand)
     })
 
-    // Click handler
     map.on('click', 'states-fill', (e) => {
       const feature = e.features?.[0]
       if (feature) {
         const id = feature.properties?.id as string
         onSelectRegion(id)
-        const meta = regionMeta[id]
-        if (meta) {
-          map.flyTo({ center: meta.center as [number, number], zoom: meta.zoom, duration: 1000 })
-        }
       }
     })
 
-    // Hover handlers
     map.on('mousemove', 'states-fill', (e) => {
       const feature = e.features?.[0]
       if (feature) {
@@ -143,7 +135,18 @@ const VoltaicMap: React.FC<VoltaicMapProps> = ({
     }
   }, [])
 
-  // Update colors when gradientMax changes
+  // Zoom to selected region or back to default
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    if (selectedRegion && regionMeta[selectedRegion]) {
+      const meta = regionMeta[selectedRegion]
+      map.flyTo({ center: meta.center as [number, number], zoom: meta.zoom, duration: 800 })
+    } else if (selectedRegion === null) {
+      map.flyTo({ center: defaultView.center, zoom: defaultView.zoom, duration: 800 })
+    }
+  }, [selectedRegion])
+
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
@@ -177,7 +180,6 @@ const VoltaicMap: React.FC<VoltaicMapProps> = ({
     <div className="relative w-full h-full">
       <div ref={mapContainer} className="w-full h-full" />
 
-      {/* Hover Tooltip */}
       {hoveredRegion && (
         <div
           className="absolute pointer-events-none z-10 px-4 py-3 border border-grid shadow-2xl"
