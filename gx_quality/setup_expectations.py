@@ -2,7 +2,7 @@ import os
 
 import great_expectations as gx
 
-from context import DATABASE_URL, get_context
+from gx_quality.context import DATABASE_URL, get_context
 
 VALID_REGIONS = ["NSW1", "QLD1", "SA1", "TAS1", "VIC1"]
 ROW_COUNT_MAX = 10_000_000
