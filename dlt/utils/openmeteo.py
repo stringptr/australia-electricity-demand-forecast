@@ -38,7 +38,7 @@ def _fetch_region(region: dict, start_date: str, end_date: str) -> list[dict]:
 
     logger.info("FETCH: weather for %s (%s) [lat=%.2f, lon=%.2f] from %s to %s", region["id"], region["name"], region["lat"], region["lon"], start_date, end_date)
 
-    with httpx.Client(timeout=httpx.Timeout(120)) as client:
+    with httpx.Client(timeout=httpx.Timeout(90)) as client:
         resp = client.get(ARCHIVE_API, params=params)
         resp.raise_for_status()
 

@@ -1,4 +1,6 @@
+import calendar
 import logging
+from datetime import datetime
 
 import dlt
 import pendulum
@@ -28,34 +30,40 @@ def _transform_row(row: dict) -> dict:
 
 
 def run_weather_pipeline(year: int) -> None:
-    from datetime import datetime
-
     pipeline = dlt.pipeline(
         pipeline_name="weather_openmeteo",
         destination="postgres",
         dataset_name="bronze",
     )
 
-    current = datetime.now()
-    start_date = f"{year}-01-01"
-    end_date = f"{year}-12-31"
-    if year == current.year:
-        end_date = current.strftime("%Y-%m-%d")
+    now = datetime.now()
+    end_month = min(12, now.month) if year == now.year else 12
 
     for region in REGIONS:
         region_id = region["id"]
+        region_rows = 0
         logger.info("REGION %s: DLT pipeline run starting ...", region_id)
-        rows = _fetch_region(region, start_date, end_date)
-        if not rows:
-            logger.info("REGION %s: no rows, skipping DLT run", region_id)
-            continue
 
-        pipeline.run(
-            (_transform_row(r) for r in rows),
-            table_name="weather",
-            write_disposition="merge",
-            primary_key=("time", "region_id"),
-        )
-        logger.info("REGION %s: DLT pipeline done (%d rows)", region_id, len(rows))
+        for month in range(1, end_month + 1):
+            month_start = f"{year}-{month:02d}-01"
+            last_day = calendar.monthrange(year, month)[1]
+            month_end = f"{year}-{month:02d}-{last_day:02d}"
+            if year == now.year and month == now.month:
+                month_end = now.strftime("%Y-%m-%d")
+
+            logger.info("REGION %s month %02d: fetching %s → %s", region_id, month, month_start, month_end)
+            rows = _fetch_region(region, month_start, month_end)
+            if not rows:
+                continue
+
+            pipeline.run(
+                (_transform_row(r) for r in rows),
+                table_name="weather",
+                write_disposition="merge",
+                primary_key=("time", "region_id"),
+            )
+            region_rows += len(rows)
+
+        logger.info("REGION %s: DLT pipeline done (%d rows)", region_id, region_rows)
 
     logger.info("PIPELINE: weather_openmeteo completed for year %d", year)
