@@ -128,6 +128,45 @@ services:
       - devnet
     profiles: ["dev"]
 
+  victorialogs:
+    image: docker.io/victoriametrics/victoria-logs:v1.50.0
+    restart: unless-stopped
+    ports:
+      - ${HOST_IP:-127.0.0.1}:9428:9428
+    volumes:
+      - ./storage/victorialogs:/vlogs
+    command:
+      - "-storageDataPath=/vlogs"
+      - "-httpListenAddr=:9428"
+      - "-retentionPeriod=${VL_RETENTION:-3M}"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -sf http://127.0.0.1:9428/health > /dev/null 2>&1 || exit 1",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    networks:
+      - devnet
+    profiles: ["dev"]
+
+  fluent-bit:
+    image: docker.io/fluent/fluent-bit:4.2.6-amd64
+    restart: unless-stopped
+    command: ["/fluent-bit/bin/fluent-bit", "-c", "/fluent-bit/etc/fluent-bit.conf"]
+    depends_on:
+      victorialogs:
+        condition: service_healthy
+    volumes:
+      - ./configs/fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - ${XDG_RUNTIME_DIR}/podman/podman.sock:/var/run/docker.sock
+    networks:
+      - devnet
+    profiles: ["dev"]
+
   nats:
     image: docker.io/nats:2.14.2
     restart: unless-stopped
@@ -432,6 +471,7 @@ services:
       DESTINATION__POSTGRES__CREDENTIALS__PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - ./dlt:/app
+      - ./shared:/app/shared:ro
     working_dir: /app
     networks:
       - devnet
@@ -448,6 +488,8 @@ services:
       NATS_URL: nats://nats:4222
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:${POSTGRES_PORT:-5432}/electricity
       VM_URL: http://victoriametrics:8428
+    volumes:
+      - ./shared:/app/shared:ro
     depends_on:
       debezium-server:
         condition: service_healthy
