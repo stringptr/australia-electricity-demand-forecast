@@ -1191,9 +1191,9 @@ export const australiaStates = {
 }
 
 export const regionMeta: Record<string, { name: string; center: [number, number]; zoom: number }> = {
-  NSW1: { name: "New South Wales", center: [147.0, -33.0], zoom: 6 },
-  QLD1: { name: "Queensland", center: [145.0, -22.0], zoom: 5.5 },
-  SA1:  { name: "South Australia", center: [135.0, -32.0], zoom: 5.5 },
-  TAS1: { name: "Tasmania", center: [146.5, -41.5], zoom: 7 },
-  VIC1: { name: "Victoria", center: [145.5, -37.0], zoom: 6.5 },
+  NSW1: { name: "New South Wales", center: [147.0, -33.0], zoom: 4.8 },
+  QLD1: { name: "Queensland", center: [145.0, -22.0], zoom: 4.5 },
+  SA1:  { name: "South Australia", center: [135.0, -32.0], zoom: 4.8 },
+  TAS1: { name: "Tasmania", center: [146.5, -41.5], zoom: 5.5 },
+  VIC1: { name: "Victoria", center: [145.5, -37.0], zoom: 5.5 },
 }
