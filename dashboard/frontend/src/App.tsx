@@ -9,8 +9,12 @@ import RegionSidebar from './components/RegionSidebar'
 import GradientLegend from './components/GradientLegend'
 import LiveIndicator from './components/LiveIndicator'
 import OrbitalGlobe from './components/OrbitalGlobe'
+import InsightPage from './components/InsightPage'
+
+type Page = 'dashboard' | 'insight'
 
 function App() {
+  const [page, setPage] = useState<Page>('dashboard')
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null)
   const [latestDemand, setLatestDemand] = useState<Record<string, number>>({})
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null)
@@ -22,7 +26,6 @@ function App() {
 
   const gradientMax = metricsData?.gradient_max || 20000
 
-  // Merge REST latest demand with WS real-time updates
   useEffect(() => {
     if (latestDemandData?.regions) {
       const initial: Record<string, number> = {}
@@ -33,7 +36,6 @@ function App() {
     }
   }, [latestDemandData])
 
-  // WebSocket message handler
   const handleWSMessage = useCallback((msg: WSMessage) => {
     if (msg.type === 'demand_update' && msg.demand_mw !== undefined) {
       setLatestDemand(prev => ({
@@ -70,42 +72,63 @@ function App() {
             VOLTAIC<span className="text-accent-red">::</span>COMMAND
           </h1>
         </div>
-        <LiveIndicator connected={connected} />
+        <div className="flex items-center gap-4">
+          <nav className="flex items-center gap-1">
+            <button
+              onClick={() => setPage('dashboard')}
+              className={`px-3 py-1 text-[10px] font-mono uppercase tracking-[0.2em] transition-colors border ${
+                page === 'dashboard'
+                  ? 'text-accent-yorange border-accent-yorange'
+                  : 'text-tactical-muted border-transparent hover:text-tactical-text hover:border-grid'
+              }`}
+            >
+              Dashboard
+            </button>
+            <button
+              onClick={() => setPage('insight')}
+              className={`px-3 py-1 text-[10px] font-mono uppercase tracking-[0.2em] transition-colors border ${
+                page === 'insight'
+                  ? 'text-accent-yorange border-accent-yorange'
+                  : 'text-tactical-muted border-transparent hover:text-tactical-text hover:border-grid'
+              }`}
+            >
+              Insight
+            </button>
+          </nav>
+          <LiveIndicator connected={connected} />
+        </div>
       </header>
 
       {/* Main Content */}
       <main className="flex-1 relative">
-        {/* Orbital Globe Signature Element */}
-        <OrbitalGlobe />
-
-        {/* Map */}
-        <VoltaicMap
-          latestDemand={latestDemand}
-          gradientMax={gradientMax}
-          selectedRegion={selectedRegion}
-          onSelectRegion={handleSelectRegion}
-          onHoverRegion={handleHoverRegion}
-        />
-
-        {/* Region Sidebar */}
-        {selectedRegion && (
-          <RegionSidebar
-            regionId={selectedRegion}
-            latestDemand={selectedRegionDemand}
-            gradientMax={gradientMax}
-            onClose={() => handleSelectRegion(null)}
-          />
-        )}
-
-        {/* Gradient Legend */}
-        <GradientLegend gradientMax={gradientMax} />
-
-        {/* Floating demand counter (when hovering) */}
-        {hoveredRegion && !selectedRegion && (
-          <div className="absolute top-4 right-4 bg-panel/95 border border-grid z-20 px-4 py-3">
-            <div className="text-[10px] text-tactical-muted uppercase tracking-wider font-mono">{hoveredRegion}</div>
-            <div className="text-lg font-mono font-bold text-tactical-text">{hoveredDemand.toLocaleString()} <span className="text-sm font-normal text-tactical-muted">MW</span></div>
-          </div>
+        {page === 'dashboard' ? (
+          <>
+            <OrbitalGlobe />
+            <VoltaicMap
+              latestDemand={latestDemand}
+              gradientMax={gradientMax}
+              selectedRegion={selectedRegion}
+              onSelectRegion={handleSelectRegion}
+              onHoverRegion={handleHoverRegion}
+            />
+            {selectedRegion && (
+              <RegionSidebar
+                regionId={selectedRegion}
+                latestDemand={selectedRegionDemand}
+                gradientMax={gradientMax}
+                onClose={() => handleSelectRegion(null)}
+              />
+            )}
+            <GradientLegend gradientMax={gradientMax} />
+            {hoveredRegion && !selectedRegion && (
+              <div className="absolute top-4 right-4 bg-panel/95 border border-grid z-20 px-4 py-3">
+                <div className="text-[10px] text-tactical-muted uppercase tracking-wider font-mono">{hoveredRegion}</div>
+                <div className="text-lg font-mono font-bold text-tactical-text">{hoveredDemand.toLocaleString()} <span className="text-sm font-normal text-tactical-muted">MW</span></div>
+              </div>
+            )}
+          </>
+        ) : (
+          <InsightPage />
         )}
       </main>
     </div>
