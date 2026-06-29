@@ -344,7 +344,8 @@ services:
           --default-artifact-root "$${MLFLOW_ARTIFACTS_DESTINATION}" \
           --serve-artifacts \
           --host 0.0.0.0 \
-          --port 5000
+          --port 5000\
+          --allowed-hosts "*"
     healthcheck:
       test:
         [
