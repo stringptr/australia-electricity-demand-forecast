@@ -9,10 +9,55 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
 
     CREATE SCHEMA IF NOT EXISTS bronze;
     CREATE SCHEMA IF NOT EXISTS silver;
+    CREATE SCHEMA IF NOT EXISTS gold;
 
-    -- Bronze tables are created/managed by DLT at runtime.
-    -- Weather still uses raw_payload JSONB.
-    -- Demand now uses flat columns (time, region_id, demand_mw).
+    -- Gold lookup: region names
+    CREATE TABLE IF NOT EXISTS gold.regions (
+        region_id   VARCHAR(10) PRIMARY KEY,
+        region_name VARCHAR(50) NOT NULL
+    );
+    INSERT INTO gold.regions (region_id, region_name) VALUES
+        ('NSW1', 'New South Wales'),
+        ('QLD1', 'Queensland'),
+        ('SA1',  'South Australia'),
+        ('TAS1', 'Tasmania'),
+        ('VIC1', 'Victoria')
+    ON CONFLICT (region_id) DO NOTHING;
+
+    -- Gold: hourly correlation data
+    CREATE TABLE IF NOT EXISTS gold.correlation_hourly (
+        time                    TIMESTAMPTZ NOT NULL,
+        region_id               VARCHAR(10) NOT NULL,
+        region_name             VARCHAR(50) NOT NULL,
+        demand_mw               NUMERIC NOT NULL,
+        temperature_2m          NUMERIC,
+        relative_humidity_2m    NUMERIC,
+        precipitation           NUMERIC,
+        cloud_cover             NUMERIC,
+        wind_speed_10m          NUMERIC,
+        shortwave_radiation     NUMERIC,
+        PRIMARY KEY (time, region_id)
+    );
+
+    -- Gold: daily aggregated correlation data
+    CREATE TABLE IF NOT EXISTS gold.correlation_daily (
+        date                    DATE NOT NULL,
+        region_id               VARCHAR(10) NOT NULL,
+        region_name             VARCHAR(50) NOT NULL,
+        demand_mw_avg           NUMERIC NOT NULL,
+        demand_mw_min           NUMERIC,
+        demand_mw_max           NUMERIC,
+        temperature_2m_avg      NUMERIC,
+        temperature_2m_min      NUMERIC,
+        temperature_2m_max      NUMERIC,
+        relative_humidity_avg   NUMERIC,
+        precipitation_sum       NUMERIC,
+        cloud_cover_avg         NUMERIC,
+        wind_speed_10m_avg      NUMERIC,
+        shortwave_radiation_avg NUMERIC,
+        data_points             INT NOT NULL,
+        PRIMARY KEY (date, region_id)
+    );
 
     -- Silver: clean, typed, no NULLs on key columns
     CREATE TABLE IF NOT EXISTS silver.demand_hourly (
