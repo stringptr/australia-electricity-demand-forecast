@@ -6,6 +6,7 @@ RUN pip install --no-cache-dir \
   dagster-docker \
   "dbt-postgres==1.10.2" \
   "dlt[postgres]" \
+  great_expectations \
   boto3 \
   httpx \
   openelectricity \

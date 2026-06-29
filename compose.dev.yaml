@@ -261,6 +261,7 @@ services:
       - ./dagster:/opt/dagster/app
       - ./dlt:/opt/dagster/dlt
       - ./dbt:/opt/dagster/dbt
+      - ./gx_quality:/opt/dagster/app/gx_quality
     depends_on:
       postgres:
         condition: service_healthy
