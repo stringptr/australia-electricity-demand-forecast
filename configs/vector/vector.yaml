@@ -1,0 +1,27 @@
+data_dir: /var/lib/vector
+
+sources:
+  podman_logs:
+    type: docker_logs
+    docker_host: unix:///var/run/docker.sock
+
+transforms:
+  to_vl_line:
+    type: remap
+    inputs: [podman_logs]
+    source: |
+      ._time = del(.timestamp)
+      ._msg = del(.message)
+      ._stream = del(.container_name)
+      . = encode_json(.)
+
+sinks:
+  victorialogs:
+    type: http
+    inputs: [to_vl_line]
+    uri: http://victorialogs:9428/insert/jsonline
+    encoding:
+      codec: text
+      framing:
+        method: newline_delimited
+    method: post
