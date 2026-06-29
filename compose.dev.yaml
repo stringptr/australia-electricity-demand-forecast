@@ -114,12 +114,7 @@ services:
       - "-memory.allowedPercent=60"
       - "-storage.minFreeDiskSpaceBytes=1GB"
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl -sf http://127.0.0.1:8428/api/v1/health > /dev/null 2>&1 ||
-            exit 1",
-        ]
+      test: ["CMD", "wget", "-qO/dev/null", "http://127.0.0.1:8428/-/healthy"]
       interval: 10s
       timeout: 3s
       retries: 10
@@ -140,11 +135,7 @@ services:
       - "-httpListenAddr=:9428"
       - "-retentionPeriod=${VL_RETENTION:-3M}"
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl -sf http://127.0.0.1:9428/health > /dev/null 2>&1 || exit 1",
-        ]
+      test: ["CMD", "wget", "-qO/dev/null", "http://127.0.0.1:9428/health"]
       interval: 10s
       timeout: 3s
       retries: 10
