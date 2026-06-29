@@ -41,8 +41,8 @@ MLFLOW_TRACKING_URI = os.environ.get(
 )
 MLFLOW_EXPERIMENT = "demand-forecasting"
 
-TRAIN_END = pd.Timestamp("2026-03-01")
-VAL_END = pd.Timestamp("2026-05-01")
+TRAIN_END = pd.Timestamp("2026-03-01", tz="UTC")
+VAL_END = pd.Timestamp("2026-05-01", tz="UTC")
 
 
 def _get_db_engine():
