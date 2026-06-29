@@ -1,7 +1,12 @@
-name: electricity-dev
+name: electricity
+
+x-logging: &default-logging
+  logging:
+    driver: json-file
 
 services:
   postgres:
+    <<: *default-logging
     image: docker.io/postgres:18.4-alpine3.23
     restart: unless-stopped
     command: ["postgres", "-c", "wal_level=logical"]
@@ -31,6 +36,7 @@ services:
     profiles: ["dev"]
 
   garage:
+    <<: *default-logging
     image: docker.io/dxflrs/garage:v2.3.0
     restart: unless-stopped
     ports:
@@ -95,6 +101,7 @@ services:
     profiles: ["dev"]
 
   victoriametrics:
+    <<: *default-logging
     image: docker.io/victoriametrics/victoria-metrics:v1.146.0
     restart: unless-stopped
     ports:
@@ -124,6 +131,7 @@ services:
     profiles: ["dev"]
 
   victorialogs:
+    <<: *default-logging
     image: docker.io/victoriametrics/victoria-logs:v1.50.0
     restart: unless-stopped
     ports:
@@ -144,21 +152,22 @@ services:
       - devnet
     profiles: ["dev"]
 
-  fluent-bit:
-    image: docker.io/fluent/fluent-bit:4.2.6-amd64
+  vector:
+    <<: *default-logging
+    image: docker.io/timberio/vector:0.56.0-alpine
     restart: unless-stopped
-    command: ["/fluent-bit/bin/fluent-bit", "-c", "/fluent-bit/etc/fluent-bit.conf"]
+    volumes:
+      - ./configs/vector/vector.yaml:/etc/vector/vector.yaml:ro
+      - ${DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock
     depends_on:
       victorialogs:
         condition: service_healthy
-    volumes:
-      - ./configs/fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
-      - ${XDG_RUNTIME_DIR}/podman/podman.sock:/var/run/docker.sock
     networks:
       - devnet
     profiles: ["dev"]
 
   nats:
+    <<: *default-logging
     image: docker.io/nats:2.14.2
     restart: unless-stopped
     ports:
@@ -203,6 +212,7 @@ services:
     profiles: ["dev"]
 
   debezium-server:
+    <<: *default-logging
     image: docker.io/debezium/server:3.0.0.Final
     restart: unless-stopped
     environment:
@@ -228,6 +238,7 @@ services:
     profiles: ["dev"]
 
   dagster-user-code:
+    <<: *default-logging
     build:
       context: .
       dockerfile: dagster/etl/Containerfile
@@ -274,6 +285,7 @@ services:
     profiles: ["dev"]
 
   dagster-webserver:
+    <<: *default-logging
     build:
       context: .
       dockerfile: ./dagster/daemon/Containerfile
@@ -317,6 +329,7 @@ services:
     profiles: ["dev"]
 
   dagster-daemon:
+    <<: *default-logging
     build:
       context: .
       dockerfile: ./dagster/daemon/Containerfile
@@ -353,6 +366,7 @@ services:
     profiles: ["dev"]
 
   mlflow:
+    <<: *default-logging
     image: ghcr.io/mlflow/mlflow:v3.14.0
     restart: unless-stopped
     ports:
@@ -401,6 +415,7 @@ services:
     profiles: ["dev"]
 
   inference:
+    <<: *default-logging
     build:
       context: .
       dockerfile: inference/Containerfile
@@ -435,6 +450,7 @@ services:
     profiles: ["dev"]
 
   dbt:
+    <<: *default-logging
     image: ghcr.io/dbt-labs/dbt-postgres:1.9.0
     restart: "no"
     environment:
@@ -453,6 +469,7 @@ services:
     profiles: ["dev"]
 
   dlt:
+    <<: *default-logging
     build:
       context: ./dlt
       dockerfile: Containerfile
@@ -470,6 +487,7 @@ services:
     profiles: ["dev"]
 
   dashboard-backend:
+    <<: *default-logging
     build:
       context: ./dashboard/backend
       dockerfile: Containerfile
@@ -498,6 +516,7 @@ services:
     profiles: ["dev"]
 
   dashboard-frontend:
+    <<: *default-logging
     build:
       context: ./dashboard/frontend
       dockerfile: Containerfile
@@ -513,6 +532,7 @@ services:
     profiles: ["dev"]
 
   dashboard-webserver:
+    <<: *default-logging
     build:
       context: ./dashboard/webserver
       dockerfile: Containerfile
@@ -530,5 +550,5 @@ services:
 
 networks:
   devnet:
-    name: electricity-dev_devnet
+    name: electricity_devnet
     driver: bridge
