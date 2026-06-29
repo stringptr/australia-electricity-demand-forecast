@@ -4,7 +4,7 @@ import sys
 
 sys.path.insert(0, "/opt/dagster/dlt")
 
-from dagster import StaticPartitionsDefinition, in_process_executor, job, op
+from dagster import In, Nothing, StaticPartitionsDefinition, in_process_executor, job, op
 
 
 class DagsterLogHandler(logging.Handler):
@@ -84,11 +84,11 @@ def load_weather_op(context) -> None:
             lg.removeHandler(handler)
 
 
-@op
+@op(ins={"demand": In(Nothing), "weather": In(Nothing)})
 def dbt_run_op(context) -> None:
     context.log.info("Running DBT silver models")
     result = subprocess.run(
-        ["dbt", "run", "--models", "silver", "--profiles-dir", "/opt/dagster/dbt"],
+        ["dbt", "run", "--select", "silver", "--project-dir", "/opt/dagster/dbt", "--profiles-dir", "/opt/dagster/dbt"],
         cwd="/opt/dagster/dbt",
         capture_output=True,
         text=True,
@@ -98,7 +98,7 @@ def dbt_run_op(context) -> None:
     if result.stderr:
         context.log.error(result.stderr.strip())
     if result.returncode != 0:
-        raise Exception(f"dbt run failed with exit code {result.returncode}")
+        raise Exception(f"dbt run failed with exit code {result.returncode}: {result.stderr.strip()}")
     context.log.info("DBT run complete")
 
 
@@ -108,6 +108,6 @@ def dbt_run_op(context) -> None:
     description="Historical backfill: DLT bronze → DBT silver",
 )
 def historical_backfill() -> None:
-    load_demand_op()
-    load_weather_op()
-    dbt_run_op()
+    demand = load_demand_op()
+    weather = load_weather_op()
+    dbt_run_op(demand=demand, weather=weather)

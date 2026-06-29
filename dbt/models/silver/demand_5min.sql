@@ -1,7 +1,8 @@
 {{
   config(
     materialized='incremental',
-    unique_key=['time', 'region_id']
+    unique_key=['time', 'region_id'],
+    pre_hook="{% if is_incremental() %}ALTER TABLE {{ this }} REPLICA IDENTITY FULL{% else %}SELECT 1{% endif %}"
   )
 }}
 

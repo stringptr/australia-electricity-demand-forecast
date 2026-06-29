@@ -3,7 +3,7 @@
   
     
 
-  create  table "electricity"."silver_silver"."weather_hourly"
+  create  table "electricity"."public_silver"."weather_hourly"
   
   
     as

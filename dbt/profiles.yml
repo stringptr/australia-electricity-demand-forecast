@@ -9,3 +9,4 @@ electricity_postgres:
       user: "{{ env_var('DBT_USER') }}"
       password: "{{ env_var('DBT_PASSWORD') }}"
       dbname: "{{ env_var('DBT_DB') }}"
+      schema: "{{ env_var('DBT_SCHEMA', 'public') }}"

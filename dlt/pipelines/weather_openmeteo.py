@@ -18,15 +18,13 @@ WEATHER_FIELDS = [
 
 
 def _transform_row(row: dict) -> dict:
-    raw = {"time": row["time"], "region_id": row["region_id"]}
-    for f in WEATHER_FIELDS:
-        raw[f] = row.get(f)
-
-    return {
+    result = {
         "time": pendulum.parse(row["time"]),
         "region_id": row["region_id"],
-        "raw_payload": raw,
     }
+    for f in WEATHER_FIELDS:
+        result[f] = row.get(f)
+    return result
 
 
 def run_weather_pipeline(year: int) -> None:
