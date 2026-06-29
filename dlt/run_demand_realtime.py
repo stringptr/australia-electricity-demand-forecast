@@ -2,17 +2,15 @@
 
 import os
 import time
-import logging
 import signal
+import logging
 
 import psycopg2
 
+from shared.logging import setup_json_logging
 from pipelines.demand_aemo_realtime import run_realtime_pipeline
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-)
+setup_json_logging("dlt-demand-realtime")
 
 logger = logging.getLogger(__name__)
 
