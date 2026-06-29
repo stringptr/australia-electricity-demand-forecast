@@ -51,17 +51,53 @@ export function useGlobalMetrics() {
 
 export function useInvalidateQueries() {
   const queryClient = useQueryClient()
-  
+
   const invalidateDemand = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['demand'] })
   }, [queryClient])
-  
+
   const invalidatePredictions = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['predictions'] })
   }, [queryClient])
-  
+
   return useMemo(() => ({
     invalidateDemand,
     invalidatePredictions,
   }), [invalidateDemand, invalidatePredictions])
+}
+
+export function useInsightData(
+  regionIds: string[],
+  startDate: string,
+  endDate: string,
+  granularity: string = 'daily'
+) {
+  const params = new URLSearchParams()
+  regionIds.forEach(id => params.append('region_id', id))
+  if (startDate) params.set('start_date', startDate)
+  if (endDate) params.set('end_date', endDate)
+  params.set('granularity', granularity)
+
+  return useQuery({
+    queryKey: ['insight', 'data', ...regionIds, startDate, endDate, granularity],
+    queryFn: () => fetchJson(`${API_BASE}/insight/data?${params}`),
+    enabled: regionIds.length > 0,
+  })
+}
+
+export function useCorrelation(
+  regionIds: string[],
+  startDate: string,
+  endDate: string
+) {
+  const params = new URLSearchParams()
+  regionIds.forEach(id => params.append('region_id', id))
+  if (startDate) params.set('start_date', startDate)
+  if (endDate) params.set('end_date', endDate)
+
+  return useQuery({
+    queryKey: ['insight', 'correlation', ...regionIds, startDate, endDate],
+    queryFn: () => fetchJson(`${API_BASE}/insight/correlation?${params}`),
+    enabled: regionIds.length > 0,
+  })
 }
