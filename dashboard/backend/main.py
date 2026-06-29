@@ -1,10 +1,17 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
+from shared.logging import setup_json_logging
+
 from core.nats_manager import manager
 from core.db import close_pool
 from routers import demand, predictions, metrics, websocket
+
+setup_json_logging("dashboard-backend")
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

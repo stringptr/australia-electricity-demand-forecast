@@ -1,12 +1,9 @@
 import argparse
-import logging
 
+from shared.logging import setup_json_logging
 from pipelines.demand_aemo import run_demand_pipeline
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-)
+setup_json_logging("dlt-demand")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="DLT: OpenElectricity demand → bronze.demand")

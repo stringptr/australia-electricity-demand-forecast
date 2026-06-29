@@ -4,6 +4,8 @@ import signal
 import threading
 import time
 
+from shared.logging import setup_json_logging
+
 from . import metrics
 from .config import REGIONS
 from .models import load_models
@@ -11,10 +13,7 @@ from .nats_handler import run_nats_loop
 from .predictor import run_inference_cycle
 from .store import ensure_table
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-)
+setup_json_logging("inference")
 logger = logging.getLogger("inference")
 
 _inference_busy = threading.Lock()
