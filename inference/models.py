@@ -2,11 +2,16 @@ import logging
 import os
 
 import mlflow
+from mlflow.exceptions import RestException
 from xgboost import XGBRegressor
+
+from shared.retry import retry
 
 from .config import MLFLOW_TRACKING_URI, REGIONS
 
 logger = logging.getLogger(__name__)
+
+_RETRYABLE = (RestException, ConnectionError, OSError)
 
 
 def load_models() -> dict[str, XGBRegressor]:
@@ -22,7 +27,10 @@ def load_models() -> dict[str, XGBRegressor]:
     for region in REGIONS:
         model_uri = f"models:/xgb_multi_{region}/latest"
         logger.info("Loading model: %s", model_uri)
-        models[region] = mlflow.xgboost.load_model(model_uri)
+        models[region] = retry(
+            lambda: mlflow.xgboost.load_model(model_uri),
+            max_retries=5, delay=2, exceptions=_RETRYABLE,
+        )
         logger.info("Loaded %s: %s estimators, %s features",
                      region, models[region].n_estimators, models[region].n_features_in_)
 
