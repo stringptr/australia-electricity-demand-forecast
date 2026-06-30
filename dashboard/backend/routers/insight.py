@@ -1,3 +1,5 @@
+import numpy as np
+
 from fastapi import APIRouter, Query
 from core.duck import get_duck
 from typing import List, Optional
@@ -24,8 +26,15 @@ WEATHER_LABELS = {
 }
 
 # Daily columns for scatter: use _avg suffixed columns
-DAILY_VAR_MAP = {v: v + "_avg" for v in WEATHER_VARS}
-DAILY_VAR_MAP["demand_mw"] = "demand_mw_avg"
+DAILY_VAR_MAP = {
+    "temperature_2m": "temperature_2m_avg",
+    "relative_humidity_2m": "relative_humidity_avg",
+    "precipitation": "precipitation_sum",
+    "cloud_cover": "cloud_cover_avg",
+    "wind_speed_10m": "wind_speed_10m_avg",
+    "shortwave_radiation": "shortwave_radiation_avg",
+    "demand_mw": "demand_mw_avg",
+}
 
 
 def _build_filters(region_ids: List[str], start_date: Optional[date], end_date: Optional[date], granularity: str):
@@ -63,7 +72,7 @@ async def get_insight_data(
     filters, _ = _build_filters(region_ids, start_date, end_date, granularity)
     where = " AND ".join(filters)
 
-    table = "gold.correlation_daily" if granularity == "daily" else "gold.correlation_hourly"
+    table = "pg.correlation_daily" if granularity == "daily" else "pg.correlation_hourly"
     if granularity == "daily":
         columns = "date, region_id, region_name, demand_mw_avg, demand_mw_min, demand_mw_max, temperature_2m_avg, relative_humidity_avg, precipitation_sum, cloud_cover_avg, wind_speed_10m_avg, shortwave_radiation_avg"
     else:
@@ -73,6 +82,8 @@ async def get_insight_data(
     result = duck.execute(
         f"SELECT {columns} FROM {table} WHERE {where} ORDER BY region_id, {order_col}"
     ).fetchdf()
+
+    result = result.replace([np.nan, float("inf"), float("-inf")], None)
 
     return {
         "granularity": granularity,
@@ -98,7 +109,7 @@ async def get_correlation(
     corr_sql = ", ".join(corr_exprs)
 
     result = duck.execute(
-        f"SELECT COUNT(*) AS n, {corr_sql} FROM gold.correlation_daily WHERE {where}"
+        f"SELECT COUNT(*) AS n, {corr_sql} FROM pg.correlation_daily WHERE {where}"
     ).fetchdf()
 
     row = result.to_dict(orient="records")[0]
@@ -108,7 +119,7 @@ async def get_correlation(
         coefficients.append({
             "variable": var,
             "variable_label": WEATHER_LABELS[var],
-            "r": round(float(row[var]), 4) if row[var] is not None else None,
+            "r": round(float(row[var]), 4) if row[var] is not None and not np.isnan(row[var]) else None,
             "n": int(n),
         })
 
