@@ -30,7 +30,7 @@ def load_models() -> dict[str, XGBRegressor]:
         models[region] = retry(
             lambda: mlflow.xgboost.load_model(model_uri),
             max_retries=5, delay=2, exceptions=_RETRYABLE,
-        )
+        )()
         logger.info("Loaded %s: %s estimators, %s features",
                      region, models[region].n_estimators, models[region].n_features_in_)
 
