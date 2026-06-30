@@ -544,7 +544,7 @@ services:
       dockerfile: Containerfile
     restart: unless-stopped
     ports:
-      - ${HOST_IP:-127.0.0.1}:5173:80
+      - ${HOST_IP:-127.0.0.1}:8080:80
     volumes:
       - ./configs/dashboard/Caddyfile:/etc/caddy/Caddyfile:ro
     networks:
