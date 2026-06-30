@@ -1,11 +1,43 @@
 :80 {
-    handle {
-      reverse_proxy dashboard-frontend:5173
-    }
+  handle {
+    reverse_proxy dashboard-frontend:5173
+  }
+
+  handle_path /logs* {
+    reverse_proxy victorialogs:9428/select/vmui
+  }
+
+  handle_path /metrics* {
+    reverse_proxy victoriametrics:8428/vmui
+  }
+
+  handle_path /etl* {
+    reverse_proxy dagster-webserver:3000
+  }
+
+  handle_path /ml* {
+    reverse_proxy mlflow:5000
+  }
 }
 
 :433 {
-    handle {
-      reverse_proxy dashboard-frontend:5173
-    }
+  handle {
+    reverse_proxy dashboard-frontend:5173
+  }
+
+  handle_path /logs* {
+    reverse_proxy victorialogs:9428/select/vmui
+  }
+
+  handle_path /metrics* {
+    reverse_proxy victoriametrics:8428/vmui
+  }
+
+  handle_path /etl* {
+    reverse_proxy dagster-webserver:3000
+  }
+
+  handle_path /ml* {
+    reverse_proxy mlflow:5000
+  }
 }
