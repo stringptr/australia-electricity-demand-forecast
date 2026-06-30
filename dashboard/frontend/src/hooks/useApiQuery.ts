@@ -1,4 +1,3 @@
-import { useCallback, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
@@ -52,18 +51,10 @@ export function useGlobalMetrics() {
 export function useInvalidateQueries() {
   const queryClient = useQueryClient()
 
-  const invalidateDemand = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['demand'] })
-  }, [queryClient])
-
-  const invalidatePredictions = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['predictions'] })
-  }, [queryClient])
-
-  return useMemo(() => ({
-    invalidateDemand,
-    invalidatePredictions,
-  }), [invalidateDemand, invalidatePredictions])
+  return {
+    invalidateDemand: () => queryClient.invalidateQueries({ queryKey: ['demand'] }),
+    invalidatePredictions: () => queryClient.invalidateQueries({ queryKey: ['predictions'] }),
+  }
 }
 
 export function useInsightData(

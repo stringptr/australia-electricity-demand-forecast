@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState } from 'react'
 import { useInsightData, useCorrelation } from '../hooks/useApiQuery'
 import RegionCheckboxes from './RegionCheckboxes'
 import DateRangePicker from './DateRangePicker'
@@ -29,15 +29,14 @@ const InsightPage: React.FC = () => {
   const { data: insightData, isLoading: dataLoading } = useInsightData(selectedRegions, startDate, endDate, 'daily')
   const { data: correlationData, isLoading: corrLoading } = useCorrelation(selectedRegions, startDate, endDate)
 
-  const scatterData = useMemo(() => insightData?.data || [], [insightData])
-  const coefficients = useMemo(() => correlationData?.coefficients || [], [correlationData])
+  const scatterData = insightData?.data || []
+  const coefficients = correlationData?.coefficients || []
 
   const demandKey = 'demand_mw_avg'
   const selectedVar = WEATHER_VARS[0]
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
-      {/* Controls */}
       <div className="flex flex-wrap items-center gap-6 mb-6 pb-4 border-b border-grid">
         <RegionCheckboxes selected={selectedRegions} onChange={setSelectedRegions} />
         <DateRangePicker
@@ -58,7 +57,6 @@ const InsightPage: React.FC = () => {
         </div>
       ) : (
         <>
-          {/* Correlation Coefficients */}
           <div className="mb-6">
             <div className="text-[10px] font-mono text-tactical-muted uppercase tracking-[0.2em] mb-2">
               Correlation Coefficients (Pearson's r)
@@ -66,7 +64,6 @@ const InsightPage: React.FC = () => {
             <CorrelationBarChart data={coefficients} />
           </div>
 
-          {/* 6 Scatter Plots Grid */}
           <div className="mb-6">
             <div className="text-[10px] font-mono text-tactical-muted uppercase tracking-[0.2em] mb-2">
               Weather vs Demand — Scatter Plots
@@ -88,7 +85,6 @@ const InsightPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Time Series Overlay */}
           <div className="mb-6">
             <div className="text-[10px] font-mono text-tactical-muted uppercase tracking-[0.2em] mb-2">
               Time Series: Demand + {selectedVar.label}
@@ -101,7 +97,6 @@ const InsightPage: React.FC = () => {
             />
           </div>
 
-          {/* Summary Stats */}
           <div className="border-t border-grid pt-4">
             <div className="text-[10px] font-mono text-tactical-muted uppercase tracking-[0.2em] mb-2">Summary</div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
