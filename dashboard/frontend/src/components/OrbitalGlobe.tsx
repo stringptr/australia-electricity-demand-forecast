@@ -1,118 +1,76 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 
 const OrbitalGlobe: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    let animationId: number
+    let rotation = 0
+
+    const draw = () => {
+      rotation += 0.005
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      const cx = canvas.width / 2
+      const cy = canvas.height / 2
+      const radius = Math.min(cx, cy) * 0.4
+
+      ctx.beginPath()
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2)
+      ctx.strokeStyle = '#252529'
+      ctx.lineWidth = 1
+      ctx.stroke()
+
+      ctx.beginPath()
+      ctx.ellipse(cx, cy, radius, radius * 0.3, rotation, 0, Math.PI * 2)
+      ctx.strokeStyle = '#252529'
+      ctx.lineWidth = 1
+      ctx.stroke()
+
+      ctx.beginPath()
+      ctx.ellipse(cx, cy, radius, radius * 0.3, rotation + Math.PI / 3, 0, Math.PI * 2)
+      ctx.strokeStyle = '#252529'
+      ctx.lineWidth = 1
+      ctx.stroke()
+
+      ctx.beginPath()
+      ctx.ellipse(cx, cy, radius, radius * 0.3, rotation + Math.PI * 2 / 3, 0, Math.PI * 2)
+      ctx.strokeStyle = '#252529'
+      ctx.lineWidth = 1
+      ctx.stroke()
+
+      const dotAngle = rotation
+      const dotX = cx + radius * Math.cos(dotAngle)
+      const dotY = cy + radius * 0.3 * Math.sin(dotAngle)
+
+      ctx.beginPath()
+      ctx.arc(dotX, dotY, 3, 0, Math.PI * 2)
+      ctx.fillStyle = '#E8402B'
+      ctx.fill()
+
+      animationId = requestAnimationFrame(draw)
+    }
+
+    draw()
+
+    return () => cancelAnimationFrame(animationId)
+  }, [])
+
   return (
-    <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-0 overflow-hidden">
-      <svg
-        viewBox="0 0 600 600"
-        className="w-[90vh] h-[90vh] max-w-[800px] max-h-[800px] opacity-[0.08]"
-        style={{ animation: 'globeRotate 120s linear infinite' }}
-      >
-        <defs>
-          <clipPath id="globeClip">
-            <circle cx="300" cy="300" r="250" />
-          </clipPath>
-        </defs>
-
-        {/* Globe outline */}
-        <circle
-          cx="300"
-          cy="300"
-          r="250"
-          fill="none"
-          stroke="#52525b"
-          strokeWidth="1"
-        />
-
-        {/* Latitude lines */}
-        {[80, 160, 240, 300, 360, 440, 520].map((cy, i) => (
-          <ellipse
-            key={`lat-${i}`}
-            cx="300"
-            cy={cy}
-            rx={Math.sqrt(250 * 250 - (cy - 300) * (cy - 300))}
-            ry={Math.sqrt(250 * 250 - (cy - 300) * (cy - 300)) * 0.25}
-            fill="none"
-            stroke="#52525b"
-            strokeWidth="0.5"
-            clipPath="url(#globeClip)"
-          />
-        ))}
-
-        {/* Longitude lines */}
-        {Array.from({ length: 12 }, (_, i) => {
-          const angle = (i * 30 * Math.PI) / 180
-          return (
-            <ellipse
-              key={`lon-${i}`}
-              cx="300"
-              cy="300"
-              rx={250 * Math.abs(Math.cos(angle)) || 0.5}
-              ry="250"
-              fill="none"
-              stroke="#52525b"
-              strokeWidth="0.5"
-              clipPath="url(#globeClip)"
-              style={{
-                transform: `rotate(${i * 30}deg)`,
-                transformOrigin: '300px 300px',
-              }}
-            />
-          )
-        })}
-
-        {/* Dashed orbital arc 1 */}
-        <ellipse
-          cx="300"
-          cy="300"
-          rx="350"
-          ry="100"
-          fill="none"
-          stroke="#52525b"
-          strokeWidth="0.5"
-          strokeDasharray="8 6"
-          style={{
-            transform: 'rotate(-20deg)',
-            transformOrigin: '300px 300px',
-          }}
-        />
-
-        {/* Dashed orbital arc 2 */}
-        <ellipse
-          cx="300"
-          cy="300"
-          rx="320"
-          ry="120"
-          fill="none"
-          stroke="#52525b"
-          strokeWidth="0.5"
-          strokeDasharray="4 8"
-          style={{
-            transform: 'rotate(35deg)',
-            transformOrigin: '300px 300px',
-          }}
-        />
-
-        {/* Inner dashed ring */}
-        <circle
-          cx="300"
-          cy="300"
-          r="270"
-          fill="none"
-          stroke="#52525b"
-          strokeWidth="0.5"
-          strokeDasharray="3 6"
-        />
-      </svg>
-
-      <style>{`
-        @keyframes globeRotate {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-    </div>
+    <canvas
+      ref={canvasRef}
+      width={300}
+      height={300}
+      className="absolute bottom-4 left-4 z-0 opacity-30 pointer-events-none"
+    />
   )
 }
 
-export default React.memo(OrbitalGlobe)
+export default OrbitalGlobe

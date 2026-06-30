@@ -206,4 +206,4 @@ const VoltaicMap: React.FC<VoltaicMapProps> = ({
   )
 }
 
-export default React.memo(VoltaicMap)
+export default VoltaicMap

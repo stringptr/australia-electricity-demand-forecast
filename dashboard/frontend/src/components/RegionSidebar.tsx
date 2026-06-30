@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState } from 'react'
 import { useDemandHistory, usePredictions, useAccuracy } from '../hooks/useApiQuery'
 import { regionMeta } from '../lib/geojson'
 import { interpolateColor } from '../lib/colors'
@@ -21,22 +21,18 @@ const RegionSidebar: React.FC<RegionSidebarProps> = ({ regionId, latestDemand, g
 
   const regionName = regionMeta[regionId]?.name || regionId
 
-  // Get predicted demand for selected horizon
   const predictedDemand = predictionData?.predictions?.[selectedHorizon - 1] || null
 
-  // Get MAPE for selected horizon
   const selectedMape = accuracyData?.accuracy?.find((a: any) => a.horizon === selectedHorizon)?.mape || null
   const accuracyPercent = selectedMape !== null ? (100 - selectedMape).toFixed(1) : null
 
-  // Build chart data: 24h history + 24h prediction
-  const chartData = useMemo(() => {
+  const chartData = (() => {
     const history = historyData?.data || []
     const predictions = predictionData?.predictions || []
     const createdAt = predictionData?.created_at ? new Date(predictionData.created_at) : null
 
     const data: Array<{ time: string; actual: number | null; predicted: number | null }> = []
 
-    // History points
     history.forEach((pt: any) => {
       data.push({
         time: pt.time,
@@ -45,7 +41,6 @@ const RegionSidebar: React.FC<RegionSidebarProps> = ({ regionId, latestDemand, g
       })
     })
 
-    // Prediction points
     if (createdAt && predictions.length > 0) {
       predictions.forEach((pred: number, idx: number) => {
         const predTime = new Date(createdAt.getTime() + (idx + 1) * 3600000)
@@ -58,22 +53,18 @@ const RegionSidebar: React.FC<RegionSidebarProps> = ({ regionId, latestDemand, g
     }
 
     return data
-  }, [historyData, predictionData])
+  })()
 
-  // Accuracy bar chart data
-  const accuracyChartData = useMemo(() => {
-    return (accuracyData?.accuracy || []).map((a: any) => ({
-      horizon: `h+${a.horizon}`,
-      mape: a.mape,
-      accuracy: a.mape !== null ? 100 - a.mape : null,
-    }))
-  }, [accuracyData])
+  const accuracyChartData = (accuracyData?.accuracy || []).map((a: any) => ({
+    horizon: `h+${a.horizon}`,
+    mape: a.mape,
+    accuracy: a.mape !== null ? 100 - a.mape : null,
+  }))
 
   const demandColor = interpolateColor(latestDemand, 0, gradientMax || 20000)
 
   return (
     <div className="absolute left-0 top-0 h-full w-[420px] bg-panel/95 border-r border-grid z-20 flex flex-col overflow-hidden">
-      {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-grid">
         <div>
           <div className="text-[10px] font-mono text-tactical-muted uppercase tracking-[0.15em] mb-1">Region Target</div>
@@ -90,7 +81,6 @@ const RegionSidebar: React.FC<RegionSidebarProps> = ({ regionId, latestDemand, g
         </button>
       </div>
 
-      {/* Stats Cards */}
       <div className="p-4 grid grid-cols-2 gap-2">
         <div className="bg-void/60 border border-grid p-3">
           <div className="text-[10px] font-mono text-tactical-muted uppercase tracking-[0.15em] mb-1">Real Demand</div>
@@ -128,7 +118,6 @@ const RegionSidebar: React.FC<RegionSidebarProps> = ({ regionId, latestDemand, g
         </div>
       </div>
 
-      {/* Demand Chart */}
       <div className="flex-1 px-4 min-h-0 overflow-auto">
         <div className="mb-4">
           <div className="text-[10px] font-mono text-tactical-muted uppercase tracking-[0.15em] mb-2">Demand Forecast (48h)</div>
