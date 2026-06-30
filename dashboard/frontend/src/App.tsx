@@ -11,10 +11,10 @@ import LiveIndicator from './components/LiveIndicator'
 import OrbitalGlobe from './components/OrbitalGlobe'
 import InsightPage from './components/InsightPage'
 
-type Page = 'dashboard' | 'insight'
+type Page = 'map' | 'insight'
 
 function App() {
-  const [page, setPage] = useState<Page>('dashboard')
+  const [page, setPage] = useState<Page>('map')
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null)
   const [latestDemand, setLatestDemand] = useState<Record<string, number>>({})
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null)
@@ -74,22 +74,20 @@ function App() {
         <div className="flex items-center gap-4">
           <nav className="flex items-center gap-1">
             <button
-              onClick={() => setPage('dashboard')}
-              className={`px-3 py-1 text-[10px] font-mono uppercase tracking-[0.2em] transition-colors border ${
-                page === 'dashboard'
-                  ? 'text-accent-yorange border-accent-yorange'
-                  : 'text-tactical-muted border-transparent hover:text-tactical-text hover:border-grid'
-              }`}
+              onClick={() => setPage('map')}
+              className={`px-3 py-1 text-[10px] font-mono uppercase tracking-[0.2em] transition-colors border ${page === 'map'
+                ? 'text-accent-yorange border-accent-yorange'
+                : 'text-tactical-muted border-transparent hover:text-tactical-text hover:border-grid'
+                }`}
             >
-              Dashboard
+              Map
             </button>
             <button
               onClick={() => setPage('insight')}
-              className={`px-3 py-1 text-[10px] font-mono uppercase tracking-[0.2em] transition-colors border ${
-                page === 'insight'
-                  ? 'text-accent-yorange border-accent-yorange'
-                  : 'text-tactical-muted border-transparent hover:text-tactical-text hover:border-grid'
-              }`}
+              className={`px-3 py-1 text-[10px] font-mono uppercase tracking-[0.2em] transition-colors border ${page === 'insight'
+                ? 'text-accent-yorange border-accent-yorange'
+                : 'text-tactical-muted border-transparent hover:text-tactical-text hover:border-grid'
+                }`}
             >
               Insight
             </button>
@@ -99,7 +97,7 @@ function App() {
       </header>
 
       <main className="flex-1 relative">
-        {page === 'dashboard' ? (
+        {page === 'map' ? (
           <>
             <OrbitalGlobe />
             <VoltaicMap
