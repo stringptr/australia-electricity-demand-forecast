@@ -499,6 +499,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:${POSTGRES_PORT:-5432}/electricity
       VM_URL: http://victoriametrics:8428
     volumes:
+      - ./dashboard/backend:/app:ro
       - ./shared:/app/shared:ro
     depends_on:
       debezium-server:
@@ -527,8 +528,13 @@ services:
     depends_on:
       dashboard-backend:
         condition: service_started
+    volumes:
+      - ./dashboard/frontend:/app
+      - /app/node_modules
     networks:
       - devnet
+    environment:
+      - NODE_ENV=development
     profiles: ["dev"]
 
   dashboard-webserver:
