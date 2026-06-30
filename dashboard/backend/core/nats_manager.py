@@ -91,7 +91,7 @@ class ConnectionManager:
                 settings.NATS_SUBJECT,
                 cb=msg_handler,
                 durable="dashboard-consumer",
-                deliver_policy=nats.js.api.DeliverPolicy.ALL
+                deliver_policy=nats.js.api.DeliverPolicy.NEW
             )
             logger.info("Subscribed to NATS subject: %s", settings.NATS_SUBJECT)
         except nats.js.errors.NotFoundError:
@@ -116,7 +116,7 @@ class ConnectionManager:
                 settings.NATS_SUBJECT,
                 cb=msg_handler,
                 durable="dashboard-consumer",
-                deliver_policy=nats.js.api.DeliverPolicy.ALL
+                deliver_policy=nats.js.api.DeliverPolicy.NEW
             )
             logger.info("Subscribed to NATS subject (on retry): %s", settings.NATS_SUBJECT)
         except nats.js.errors.NotFoundError:

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from './lib/queryClient'
 import { useWebSocket } from './hooks/useWebSocket'
@@ -24,6 +24,8 @@ function App() {
   const { data: metricsData } = useGlobalMetrics()
   const { invalidateDemand, invalidatePredictions } = useInvalidateQueries()
 
+  const lastDemandInvalidation = useRef(0)
+
   const gradientMax = metricsData?.gradient_max || 20000
 
   useEffect(() => {
@@ -42,7 +44,11 @@ function App() {
         ...prev,
         [msg.region_id]: msg.demand_mw!,
       }))
-      invalidateDemand()
+      const now = Date.now()
+      if (now - lastDemandInvalidation.current > 1000) {
+        lastDemandInvalidation.current = now
+        invalidateDemand()
+      }
     } else if (msg.type === 'prediction_update') {
       invalidatePredictions()
     }
