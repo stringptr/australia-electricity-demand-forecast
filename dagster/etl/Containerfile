@@ -2,6 +2,7 @@ FROM python:3.12-slim
 
 RUN pip install --no-cache-dir \
   dagster \
+  dagster-dbt \
   dagster-postgres \
   dagster-docker \
   "dbt-postgres==1.10.2" \
@@ -28,4 +29,4 @@ WORKDIR /opt/dagster/app
 
 EXPOSE 4000
 
-CMD ["dagster", "code-server", "start", "-h", "0.0.0.0", "-p", "4000", "-f", "/opt/dagster/app/definitions.py"]
+CMD ["sh", "-c", "dbt parse --project-dir /opt/dagster/dbt --profiles-dir /opt/dagster/dbt && exec dagster code-server start -h 0.0.0.0 -p 4000 -f /opt/dagster/app/definitions.py"]
