@@ -1,7 +1,11 @@
 :80 {
-  handle {
-    reverse_proxy dashboard-frontend:5173
-  }
+	rate_limit {
+		zone global_zone {
+			key {remote_host}
+			events 100
+			window 1m
+		}
+	}
 
   handle_path /logs* {
     reverse_proxy victorialogs:9428/select/vmui
@@ -22,12 +26,21 @@
   handle_path /nats* {
     reverse_proxy nats:31311
   }
+
+  handle {
+    reverse_proxy dashboard-frontend:5173
+  }
+
 }
 
 :433 {
-  handle {
-    reverse_proxy dashboard-frontend:5173
-  }
+	rate_limit {
+		zone global_zone {
+			key {remote_host}
+			events 100
+			window 1m
+		}
+	}
 
   handle_path /logs* {
     reverse_proxy victorialogs:9428/select/vmui
@@ -47,5 +60,9 @@
 
   handle_path /nats* {
     reverse_proxy nats:31311
+  }
+
+  handle {
+    reverse_proxy dashboard-frontend:5173
   }
 }
