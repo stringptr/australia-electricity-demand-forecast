@@ -1,0 +1,126 @@
+# Welcome to Great Expectations! Always know what to expect from your data.
+#
+# Here you can define datasources, batch kwargs generators, integrations and
+# more. This file is intended to be committed to your repo. For help with
+# configuration please:
+#   - Read our docs: https://docs.greatexpectations.io/docs/guides/connecting_to_your_data/connect_to_data_overview/#2-configure-your-datasource
+#   - Join our slack channel: http://greatexpectations.io/slack
+
+# config_version refers to the syntactic version of this config file, and is used in maintaining backwards compatibility
+# It is auto-generated and usually does not need to be changed.
+config_version: 4.0
+
+# This config file supports variable substitution which enables: 1) keeping
+# secrets out of source control & 2) environment-based configuration changes
+# such as staging vs prod.
+#
+# When GX encounters substitution syntax (like `my_key: ${my_value}` or
+# `my_key: $my_value`) in the great_expectations.yml file, it will attempt
+# to replace the value of `my_key` with the value from an environment
+# variable `my_value` or a corresponding key read from this config file,
+# which is defined through the `config_variables_file_path`.
+# Environment variables take precedence over variables defined here.
+#
+# Substitution values defined here can be a simple (non-nested) value,
+# nested value such as a dictionary, or an environment variable (i.e. ${ENV_VAR})
+#
+#
+# https://docs.greatexpectations.io/docs/guides/setup/configuring_data_contexts/how_to_configure_credentials
+
+
+config_variables_file_path: uncommitted/config_variables.yml
+
+# The plugins_directory will be added to your python path for custom modules
+# used to override and extend Great Expectations.
+plugins_directory: plugins/
+
+stores:
+# Stores are configurable places to store things like Expectations, Validations
+# Data Docs, and more. These are for advanced users only - most users can simply
+# leave this section alone.
+  expectations_store:
+    class_name: ExpectationsStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: expectations/
+
+  validation_results_store:
+    class_name: ValidationResultsStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: uncommitted/validations/
+
+  checkpoint_store:
+    class_name: CheckpointStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      suppress_store_backend_id: true
+      base_directory: checkpoints/
+
+  validation_definition_store:
+    class_name: ValidationDefinitionStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: validation_definitions/
+
+expectations_store_name: expectations_store
+validation_results_store_name: validation_results_store
+checkpoint_store_name: checkpoint_store
+
+data_docs_sites:
+  # Data Docs make it simple to visualize data quality in your project. These
+  # include Expectations, Validations & Profiles. The are built for all
+  # Datasources from JSON artifacts in the local repo including validations &
+  # profiles from the uncommitted directory. Read more at https://docs.greatexpectations.io/docs/terms/data_docs
+  local_site:
+    class_name: SiteBuilder
+    show_how_to_buttons: true
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: uncommitted/data_docs/local_site/
+    site_index_builder:
+      class_name: DefaultSiteIndexBuilder
+fluent_datasources:
+  electricity_db:
+    type: postgres
+    id: 21b9fb03-500d-4042-b0e4-3d306c226631
+    assets:
+      bronze_demand:
+        type: table
+        id: 24420f60-dc27-4954-93d9-ee57742c0e3a
+        batch_metadata: {}
+        table_name: demand
+        schema_name: bronze
+      bronze_weather:
+        type: table
+        id: 990b6540-3961-424d-bd8e-bbee5cdec075
+        batch_metadata: {}
+        table_name: weather
+        schema_name: bronze
+      silver_demand_5min:
+        type: table
+        id: db1c548b-40fb-4e93-b169-c5af6cb1d893
+        batch_metadata: {}
+        table_name: demand_5min
+        schema_name: silver
+      silver_weather_hourly:
+        type: table
+        id: 43a932c3-b86c-408a-9254-f8fa437921b3
+        batch_metadata: {}
+        table_name: weather_hourly
+        schema_name: silver
+      silver_features_ml:
+        type: table
+        id: d1da1ca2-1b95-48e5-9089-922e81446d28
+        batch_metadata: {}
+        table_name: features_ml
+        schema_name: silver
+      silver_predictions:
+        type: table
+        id: 1c784ae8-758a-4395-b8d2-2be823a46b57
+        batch_metadata: {}
+        table_name: predictions
+        schema_name: silver
+    connection_string: postgresql://postgres:postgres@postgres:5432/electricity
+analytics_enabled:
+data_context_id: 3b498eff-a46a-4553-b0ed-99805ec8d06c

@@ -1,0 +1,506 @@
+{
+  "expectations": [
+    {
+      "kwargs": {
+        "max_value": 1000000,
+        "min_value": 5
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_table_row_count_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "created_at"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "region_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "region_id",
+        "value_set": [
+          "NSW1",
+          "QLD1",
+          "SA1",
+          "TAS1",
+          "VIC1"
+        ]
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_in_set"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h01"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h01",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h02"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h02",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h03"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h03",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h04"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h04",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h05"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h05",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h06"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h06",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h07"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h07",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h08"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h08",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h09"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h09",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h10"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h10",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h11"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h11",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h12"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h12",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h13"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h13",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h14"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h14",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h15"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h15",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h16"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h16",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h17"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h17",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h18"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h18",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h19"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h19",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h20"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h20",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h21"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h21",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h22"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h22",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h23"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h23",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h24"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "horizon_h24",
+        "max_value": 25000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    }
+  ],
+  "id": null,
+  "meta": {
+    "great_expectations_version": "1.18.2"
+  },
+  "name": "default",
+  "notes": null
+}

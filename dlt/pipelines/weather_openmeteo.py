@@ -1,9 +1,11 @@
 import calendar
 import logging
-from datetime import datetime
+import os
+from datetime import datetime, timedelta
 
 import dlt
 import pendulum
+from sqlalchemy import create_engine, text
 
 from utils.openmeteo import REGIONS, _fetch_region
 
@@ -29,6 +31,15 @@ def _transform_row(row: dict) -> dict:
     return result
 
 
+def _get_db_engine():
+    host = os.environ.get("PG_HOST", os.environ.get("POSTGRES_HOST", "postgres"))
+    port = os.environ.get("PG_PORT", os.environ.get("POSTGRES_PORT", "5432"))
+    user = os.environ.get("PG_USER", os.environ.get("POSTGRES_USER", "postgres"))
+    password = os.environ.get("PG_PASSWORD", os.environ.get("POSTGRES_PASSWORD", "postgres"))
+    db = os.environ.get("PG_DB", os.environ.get("POSTGRES_DB", "electricity"))
+    return create_engine(f"postgresql://{user}:{password}@{host}:{port}/{db}")
+
+
 def run_weather_pipeline(year: int) -> None:
     pipeline = dlt.pipeline(
         pipeline_name="weather_openmeteo",
@@ -37,6 +48,28 @@ def run_weather_pipeline(year: int) -> None:
     )
 
     now = datetime.now()
+
+    try:
+        engine = _get_db_engine()
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT MAX(time) FROM bronze.weather"))
+            last_time = result.scalar()
+    except Exception:
+        logger.warning("Cannot query bronze.weather, fetching all data")
+        last_time = None
+
+    if last_time is not None:
+        start_from = last_time.date() - timedelta(days=1)
+        today = now.date()
+        if start_from >= today:
+            start_from = today
+            logger.info("DB has weather up to %s (today), will re-fetch today", last_time)
+        else:
+            logger.info("DB has weather up to %s, starting from %s", last_time, start_from)
+    else:
+        start_from = None
+        logger.info("DB has no bronze.weather data, fetching all")
+
     end_month = min(12, now.month) if year == now.year else 12
 
     for region in REGIONS:
@@ -51,7 +84,18 @@ def run_weather_pipeline(year: int) -> None:
             if year == now.year and month == now.month:
                 month_end = now.strftime("%Y-%m-%d")
 
-            logger.info("REGION %s month %02d: fetching %s → %s", region_id, month, month_start, month_end)
+            if start_from is not None:
+                adjusted_start = start_from.isoformat()
+                if adjusted_start > month_start:
+                    month_start = adjusted_start
+
+            if month_start >= month_end:
+                logger.info("REGION %s month %02d: already complete, skipping",
+                            region_id, month)
+                continue
+
+            logger.info("REGION %s month %02d: fetching %s → %s",
+                        region_id, month, month_start, month_end)
             rows = _fetch_region(region, month_start, month_end)
             if not rows:
                 continue

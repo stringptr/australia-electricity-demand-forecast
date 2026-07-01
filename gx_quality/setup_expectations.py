@@ -32,11 +32,14 @@ def _get_datasource():
 def _build_batch_request(table_name, schema_name):
     ds = _get_datasource()
     asset_name = f"{schema_name}_{table_name}"
-    asset = ds.add_table_asset(
-        name=asset_name,
-        table_name=table_name,
-        schema_name=schema_name,
-    )
+    try:
+        asset = ds.add_table_asset(
+            name=asset_name,
+            table_name=table_name,
+            schema_name=schema_name,
+        )
+    except ValueError:
+        asset = ds.get_asset(asset_name)
     return asset_name, asset.build_batch_request()
 
 
@@ -51,7 +54,7 @@ def _define_bronze_demand():
         "demand_mw", min_value=0, max_value=20000, mostly=0.9
     )
     v.save_expectation_suite(
-        name="bronze.demand", discard_failed_expectations=False
+        "bronze.demand", discard_failed_expectations=False
     )
     return asset_name
 
@@ -75,7 +78,7 @@ def _define_bronze_weather():
         "shortwave_radiation", 0, 1500, mostly=0.95
     )
     v.save_expectation_suite(
-        name="bronze.weather", discard_failed_expectations=False
+        "bronze.weather", discard_failed_expectations=False
     )
     return asset_name
 
@@ -93,7 +96,7 @@ def _define_silver_demand_5min():
     )
     v.expect_compound_columns_to_be_unique(["time", "region_id"])
     v.save_expectation_suite(
-        name="silver.demand_5min", discard_failed_expectations=False
+        "silver.demand_5min", discard_failed_expectations=False
     )
     return asset_name
 
@@ -118,7 +121,7 @@ def _define_silver_weather_hourly():
     )
     v.expect_compound_columns_to_be_unique(["time", "region_id"])
     v.save_expectation_suite(
-        name="silver.weather_hourly", discard_failed_expectations=False
+        "silver.weather_hourly", discard_failed_expectations=False
     )
     return asset_name
 
@@ -145,7 +148,7 @@ def _define_silver_features_ml():
     v.expect_column_values_to_be_between("season", 1, 4)
     v.expect_compound_columns_to_be_unique(["time", "region_id"])
     v.save_expectation_suite(
-        name="silver.features_ml", discard_failed_expectations=False
+        "silver.features_ml", discard_failed_expectations=False
     )
     return asset_name
 
@@ -162,7 +165,7 @@ def _define_silver_predictions():
         v.expect_column_values_to_not_be_null(col)
         v.expect_column_values_to_be_between(col, 0, 25000, mostly=0.95)
     v.save_expectation_suite(
-        name="silver.predictions", discard_failed_expectations=False
+        "silver.predictions", discard_failed_expectations=False
     )
     return asset_name
 
@@ -198,18 +201,21 @@ def setup_checkpoints(asset_names: dict[str, str]):
         validations = []
         for sn in suite_names:
             table_name, schema_name = TABLE_SPECS[sn]
-            asset = ds.add_table_asset(
-                name=asset_names[sn],
-                table_name=table_name,
-                schema_name=schema_name,
-            )
+            try:
+                asset = ds.add_table_asset(
+                    name=asset_names[sn],
+                    table_name=table_name,
+                    schema_name=schema_name,
+                )
+            except ValueError:
+                asset = ds.get_asset(asset_names[sn])
             validations.append(
                 {
                     "batch_request": asset.build_batch_request(),
                     "expectation_suite_name": sn,
                 }
             )
-        context.add_or_update_checkpoint(name=cp_name, validations=validations)
+        context.checkpoints.add_or_update(cp_name, validations)
 
 
 def setup_all():
