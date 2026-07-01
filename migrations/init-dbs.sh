@@ -11,6 +11,25 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE SCHEMA IF NOT EXISTS silver;
     CREATE SCHEMA IF NOT EXISTS gold;
 
+    CREATE TABLE IF NOT EXISTS bronze.demand (
+        time TIMESTAMPTZ NOT NULL,
+        region_id VARCHAR(10) NOT NULL,
+        demand_mw NUMERIC,
+        PRIMARY KEY (time, region_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS bronze.weather (
+        time TIMESTAMPTZ NOT NULL,
+        region_id VARCHAR(10) NOT NULL,
+        temperature_2m NUMERIC,
+        relative_humidity_2m NUMERIC,
+        precipitation NUMERIC,
+        cloud_cover NUMERIC,
+        wind_speed_10m NUMERIC,
+        shortwave_radiation NUMERIC,
+        PRIMARY KEY (time, region_id)
+    );
+
     -- Gold lookup: region names
     CREATE TABLE IF NOT EXISTS gold.regions (
         region_id   VARCHAR(10) PRIMARY KEY,

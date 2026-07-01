@@ -1,0 +1,61 @@
+{
+  "expectations": [
+    {
+      "kwargs": {
+        "max_value": 10000000,
+        "min_value": 1
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_table_row_count_to_be_between"
+    },
+    {
+      "kwargs": {
+        "column": "time"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "region_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "kwargs": {
+        "column": "region_id",
+        "value_set": [
+          "NSW1",
+          "QLD1",
+          "SA1",
+          "TAS1",
+          "VIC1"
+        ]
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_in_set"
+    },
+    {
+      "kwargs": {
+        "column": "demand_mw",
+        "max_value": 20000.0,
+        "min_value": 0.0,
+        "mostly": 0.9
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    }
+  ],
+  "id": null,
+  "meta": {
+    "great_expectations_version": "1.18.2"
+  },
+  "name": "default",
+  "notes": null
+}

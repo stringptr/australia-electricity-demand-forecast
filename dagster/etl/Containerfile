@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 RUN pip install --no-cache-dir \
   dagster \
-  dagster-dbt \
+  "dagster-dbt>=0.24" \
   dagster-postgres \
   dagster-docker \
   "dbt-postgres==1.10.2" \
