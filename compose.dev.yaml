@@ -211,6 +211,20 @@ services:
       - devnet
     profiles: ["dev"]
 
+  nats-nui:
+    image: ghcr.io/nats-nui/nui:0.9.3
+    restart: unless-stopped
+    ports:
+      - ${HOST_IP:-127.0.0.1}:31311:31311
+    volumes:
+      - ./storage/nui:/db
+    depends_on:
+      nats:
+        condition: service_started
+    networks:
+      - devnet
+    profiles: ["dev"]
+
   debezium-server:
     <<: *default-logging
     image: docker.io/debezium/server:3.0.0.Final
