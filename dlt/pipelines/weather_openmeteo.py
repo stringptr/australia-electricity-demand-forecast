@@ -1,6 +1,7 @@
 import calendar
 import logging
 import os
+import shutil
 from datetime import datetime, timedelta
 
 import dlt
@@ -40,11 +41,15 @@ def _get_db_engine():
 
 
 def run_weather_pipeline(year: int) -> int:
+    pipelines_dir = "/tmp/dlt/weather_openmeteo"
+    if os.path.exists(pipelines_dir):
+        shutil.rmtree(pipelines_dir)
+
     pipeline = dlt.pipeline(
         pipeline_name="weather_openmeteo",
         destination="postgres",
         dataset_name="bronze",
-        pipelines_dir="/tmp/dlt/weather_openmeteo",
+        pipelines_dir=pipelines_dir,
     )
 
     now = datetime.now()

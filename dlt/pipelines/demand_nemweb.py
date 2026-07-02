@@ -3,6 +3,7 @@ import io
 import logging
 import os
 import re
+import shutil
 import zipfile
 from datetime import datetime, timezone
 
@@ -189,11 +190,15 @@ def run_nemweb_pipeline() -> list[dict]:
         return []
 
     max_time = max(r["time"] for r in all_rows)
+    pipelines_dir = "/tmp/dlt/demand_nemweb"
+    if os.path.exists(pipelines_dir):
+        shutil.rmtree(pipelines_dir)
+
     pipeline = dlt.pipeline(
         pipeline_name="demand_nemweb",
         destination="postgres",
         dataset_name="bronze",
-        pipelines_dir="/tmp/dlt/demand_nemweb",
+        pipelines_dir=pipelines_dir,
     )
     pipeline.run(
         all_rows,

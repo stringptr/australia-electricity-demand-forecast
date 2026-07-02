@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 from datetime import datetime, timedelta
 
 import dlt
@@ -22,11 +23,15 @@ def _get_db_engine():
 def run_demand_pipeline(year: int) -> None:
     logger.info("START: Demand data pipeline for year %d", year)
 
+    pipelines_dir = "/tmp/dlt/demand_openelectricity"
+    if os.path.exists(pipelines_dir):
+        shutil.rmtree(pipelines_dir)
+
     pipeline = dlt.pipeline(
         pipeline_name="demand_openelectricity",
         destination="postgres",
         dataset_name="bronze",
-        pipelines_dir="/tmp/dlt/demand_openelectricity",
+        pipelines_dir=pipelines_dir,
     )
 
     now = datetime.now()
