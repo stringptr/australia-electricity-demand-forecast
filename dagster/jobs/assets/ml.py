@@ -169,6 +169,13 @@ def xgboost_models(context: AssetExecutionContext) -> dict:
 
                 y_pred = model.predict(X_ts)
 
+                if y_pred.ndim == 1:
+                    context.log.warning(
+                        f"{region_id}: y_pred is 1D (shape {y_pred.shape}), "
+                        f"expected ({len(X_ts)}, {MAX_HORIZON})"
+                    )
+                    y_pred = np.column_stack([y_pred] * MAX_HORIZON)
+
                 per_horizon_r2 = {}
                 per_horizon_mae = {}
                 for h_idx, h in enumerate(range(1, MAX_HORIZON + 1)):
