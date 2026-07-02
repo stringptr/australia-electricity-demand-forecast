@@ -562,6 +562,8 @@ services:
       args:
         VITE_API_BASE_URL: http://localhost:8000
     restart: unless-stopped
+    ports:
+      - ${HOST_IP:-127.0.0.1}:5173:5173
     depends_on:
       dashboard-backend:
         condition: service_started
