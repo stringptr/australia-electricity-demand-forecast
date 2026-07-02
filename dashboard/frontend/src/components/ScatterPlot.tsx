@@ -31,16 +31,18 @@ const ScatterPlot: React.FC<ScatterPlotProps> = ({
   return (
     <div className="bg-void/40 border border-grid p-3">
       <ResponsiveContainer width="100%" height={220}>
-        <ScatterChart margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+        <ScatterChart margin={{ top: 5, right: 10, bottom: 30, left: 10 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#252529" />
           <XAxis
             dataKey="x"
+            type="number"
             stroke="#52525b"
             tick={{ fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
             label={{ value: xLabel, fill: '#52525b', fontSize: 11, fontFamily: 'JetBrains Mono, monospace', position: 'bottom', offset: -2 }}
           />
           <YAxis
             dataKey="y"
+            type="number"
             stroke="#52525b"
             tick={{ fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
             tickFormatter={(v: number) => `${(v / 1000).toFixed(1)}k`}
@@ -64,6 +66,7 @@ const ScatterPlot: React.FC<ScatterPlotProps> = ({
           />
           <Scatter
             data={chartData}
+            dataKey={{ x: 'x', y: 'y' }}
             fill={color}
             opacity={0.6}
             r={3}

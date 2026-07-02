@@ -29,7 +29,7 @@ const TimeSeriesOverlay: React.FC<TimeSeriesOverlayProps> = ({
   return (
     <div className="bg-void/40 border border-grid p-3">
       <ResponsiveContainer width="100%" height={260}>
-        <LineChart data={data} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+        <LineChart data={data} margin={{ top: 5, right: 15, bottom: 30, left: 10 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#252529" />
           <XAxis
             dataKey={data.length > 0 && 'date' in data[0] ? 'date' : 'time'}
