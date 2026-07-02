@@ -2,8 +2,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
-async function fetchJson(url: string) {
-  const res = await fetch(url)
+async function fetchJson(url: string, signal?: AbortSignal) {
+  const res = await fetch(url, { signal })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json()
 }
@@ -11,7 +11,7 @@ async function fetchJson(url: string) {
 export function useLatestDemand() {
   return useQuery({
     queryKey: ['demand', 'latest'],
-    queryFn: () => fetchJson(`${API_BASE}/demand/latest`),
+    queryFn: ({ signal }) => fetchJson(`${API_BASE}/demand/latest`, signal),
     refetchInterval: 30000,
   })
 }
@@ -19,7 +19,7 @@ export function useLatestDemand() {
 export function useDemandHistory(regionId: string, hours: number = 24) {
   return useQuery({
     queryKey: ['demand', 'history', regionId, hours],
-    queryFn: () => fetchJson(`${API_BASE}/demand/history?region_id=${regionId}&hours=${hours}`),
+    queryFn: ({ signal }) => fetchJson(`${API_BASE}/demand/history?region_id=${regionId}&hours=${hours}`, signal),
     enabled: !!regionId,
   })
 }
@@ -27,7 +27,7 @@ export function useDemandHistory(regionId: string, hours: number = 24) {
 export function usePredictions(regionId: string) {
   return useQuery({
     queryKey: ['predictions', 'latest', regionId],
-    queryFn: () => fetchJson(`${API_BASE}/predictions/latest?region_id=${regionId}`),
+    queryFn: ({ signal }) => fetchJson(`${API_BASE}/predictions/latest?region_id=${regionId}`, signal),
     enabled: !!regionId,
   })
 }
@@ -35,7 +35,7 @@ export function usePredictions(regionId: string) {
 export function useAccuracy(regionId: string) {
   return useQuery({
     queryKey: ['predictions', 'accuracy', regionId],
-    queryFn: () => fetchJson(`${API_BASE}/predictions/accuracy?region_id=${regionId}`),
+    queryFn: ({ signal }) => fetchJson(`${API_BASE}/predictions/accuracy?region_id=${regionId}`, signal),
     enabled: !!regionId,
   })
 }
@@ -43,7 +43,7 @@ export function useAccuracy(regionId: string) {
 export function useGlobalMetrics() {
   return useQuery({
     queryKey: ['metrics', 'global'],
-    queryFn: () => fetchJson(`${API_BASE}/metrics/global`),
+    queryFn: ({ signal }) => fetchJson(`${API_BASE}/metrics/global`, signal),
     refetchInterval: 60000,
   })
 }
@@ -71,7 +71,7 @@ export function useInsightData(
 
   return useQuery({
     queryKey: ['insight', 'data', ...regionIds, startDate, endDate, granularity],
-    queryFn: () => fetchJson(`${API_BASE}/insight/data?${params}`),
+    queryFn: ({ signal }) => fetchJson(`${API_BASE}/insight/data?${params}`, signal),
     enabled: regionIds.length > 0,
   })
 }
@@ -88,7 +88,7 @@ export function useCorrelation(
 
   return useQuery({
     queryKey: ['insight', 'correlation', ...regionIds, startDate, endDate],
-    queryFn: () => fetchJson(`${API_BASE}/insight/correlation?${params}`),
+    queryFn: ({ signal }) => fetchJson(`${API_BASE}/insight/correlation?${params}`, signal),
     enabled: regionIds.length > 0,
   })
 }
