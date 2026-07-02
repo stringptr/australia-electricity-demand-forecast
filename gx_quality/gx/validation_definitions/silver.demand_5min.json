@@ -1,0 +1,22 @@
+{
+  "data": {
+    "asset": {
+      "id": "db1c548b-40fb-4e93-b169-c5af6cb1d893",
+      "name": "silver_demand_5min"
+    },
+    "batch_definition": {
+      "id": "ff5eca74-00cd-4351-ba65-43871d0c7b8b",
+      "name": "silver.demand_5min_batch"
+    },
+    "datasource": {
+      "id": "21b9fb03-500d-4042-b0e4-3d306c226631",
+      "name": "electricity_db"
+    }
+  },
+  "id": "9e936b02-6611-4b17-8b6d-69de14f265ad",
+  "name": "silver.demand_5min",
+  "suite": {
+    "id": "99e6054c-c45b-4f09-87b8-896193fadfbc",
+    "name": "silver.demand_5min"
+  }
+}

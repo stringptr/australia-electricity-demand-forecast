@@ -1,0 +1,22 @@
+{
+  "data": {
+    "asset": {
+      "id": "24420f60-dc27-4954-93d9-ee57742c0e3a",
+      "name": "bronze_demand"
+    },
+    "batch_definition": {
+      "id": "13000fb1-0a90-4321-97db-b873d8852b62",
+      "name": "bronze.demand_batch"
+    },
+    "datasource": {
+      "id": "21b9fb03-500d-4042-b0e4-3d306c226631",
+      "name": "electricity_db"
+    }
+  },
+  "id": "a38c953b-77f2-467a-a17e-0804ee7bff49",
+  "name": "bronze.demand",
+  "suite": {
+    "id": "e6c3f78e-9f9c-4546-a303-ada208ecc6c7",
+    "name": "bronze.demand"
+  }
+}

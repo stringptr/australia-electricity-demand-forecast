@@ -1,0 +1,135 @@
+{
+  "expectations": [
+    {
+      "id": "25002124-4258-4fe7-a768-cf737d3b3492",
+      "kwargs": {
+        "max_value": 10000000,
+        "min_value": 1
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_table_row_count_to_be_between"
+    },
+    {
+      "id": "2ceb059e-0b68-476a-9479-db026d547c59",
+      "kwargs": {
+        "column": "time"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "2d0c00eb-f39d-4292-804b-351c9ed878d1",
+      "kwargs": {
+        "column": "region_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "bd286402-1865-40f0-9915-6df3d68c3996",
+      "kwargs": {
+        "column": "temperature_2m"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "dfe343d9-9a3a-4a71-b3a2-540cf457bb4d",
+      "kwargs": {
+        "column": "region_id",
+        "value_set": [
+          "NSW1",
+          "QLD1",
+          "SA1",
+          "TAS1",
+          "VIC1"
+        ]
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_in_set"
+    },
+    {
+      "id": "a6ee968c-031b-4e4a-ba9c-900d1fe1e41a",
+      "kwargs": {
+        "column": "temperature_2m",
+        "max_value": 55.0,
+        "min_value": -10.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "d4eb8891-3365-4a13-9c25-1df7f074cecd",
+      "kwargs": {
+        "column": "relative_humidity_2m",
+        "max_value": 100.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "715b79f2-f044-4500-a2de-fc443aa5b725",
+      "kwargs": {
+        "column": "precipitation",
+        "max_value": 500.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "cfd95cb2-1715-47e3-a23a-b27c87fd218c",
+      "kwargs": {
+        "column": "cloud_cover",
+        "max_value": 100.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "43afa596-69f2-4b77-b843-ad71acd84b49",
+      "kwargs": {
+        "column": "wind_speed_10m",
+        "max_value": 200.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "18c44b1d-859c-43e5-bd29-1bdc806747c3",
+      "kwargs": {
+        "column": "shortwave_radiation",
+        "max_value": 1500.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    }
+  ],
+  "id": "eac91e54-33fa-4c7f-bc45-481a101fa397",
+  "meta": {
+    "great_expectations_version": "1.18.2"
+  },
+  "name": "bronze.weather",
+  "notes": null
+}

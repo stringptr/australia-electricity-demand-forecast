@@ -1,0 +1,22 @@
+{
+  "data": {
+    "asset": {
+      "id": "990b6540-3961-424d-bd8e-bbee5cdec075",
+      "name": "bronze_weather"
+    },
+    "batch_definition": {
+      "id": "a5aa3ab1-16a3-4441-ab0a-54f759ade362",
+      "name": "bronze.weather_batch"
+    },
+    "datasource": {
+      "id": "21b9fb03-500d-4042-b0e4-3d306c226631",
+      "name": "electricity_db"
+    }
+  },
+  "id": "f7815db4-b86b-4e5b-9ec7-9d77309903da",
+  "name": "bronze.weather",
+  "suite": {
+    "id": "eac91e54-33fa-4c7f-bc45-481a101fa397",
+    "name": "bronze.weather"
+  }
+}

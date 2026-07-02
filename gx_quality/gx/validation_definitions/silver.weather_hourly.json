@@ -1,0 +1,22 @@
+{
+  "data": {
+    "asset": {
+      "id": "43a932c3-b86c-408a-9254-f8fa437921b3",
+      "name": "silver_weather_hourly"
+    },
+    "batch_definition": {
+      "id": "e3b879f6-f7a1-4051-8b21-091b3c4ea33e",
+      "name": "silver.weather_hourly_batch"
+    },
+    "datasource": {
+      "id": "21b9fb03-500d-4042-b0e4-3d306c226631",
+      "name": "electricity_db"
+    }
+  },
+  "id": "2778cfa4-19a1-404c-ba12-e423aea76199",
+  "name": "silver.weather_hourly",
+  "suite": {
+    "id": "387a9fb2-c911-44fa-8b30-7bef4f64106e",
+    "name": "silver.weather_hourly"
+  }
+}

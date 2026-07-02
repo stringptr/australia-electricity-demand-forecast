@@ -1,0 +1,12 @@
+{
+  "actions": [],
+  "id": "7e914e75-64cf-4860-8cc3-d6d69780e794",
+  "name": "features_validation",
+  "result_format": "SUMMARY",
+  "validation_definitions": [
+    {
+      "id": "6b47d17d-ff75-421f-ae25-8cbfb21f9764",
+      "name": "silver.features_ml"
+    }
+  ]
+}

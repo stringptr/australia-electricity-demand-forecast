@@ -1,0 +1,16 @@
+{
+  "actions": [],
+  "id": "7dc4c753-0f0e-46b5-a3b1-bda2937011e1",
+  "name": "bronze_validation",
+  "result_format": "SUMMARY",
+  "validation_definitions": [
+    {
+      "id": "a38c953b-77f2-467a-a17e-0804ee7bff49",
+      "name": "bronze.demand"
+    },
+    {
+      "id": "f7815db4-b86b-4e5b-9ec7-9d77309903da",
+      "name": "bronze.weather"
+    }
+  ]
+}

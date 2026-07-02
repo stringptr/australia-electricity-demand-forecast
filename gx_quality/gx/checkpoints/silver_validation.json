@@ -1,0 +1,16 @@
+{
+  "actions": [],
+  "id": "2d2059d2-5db1-4c6a-b619-c438eac1ea20",
+  "name": "silver_validation",
+  "result_format": "SUMMARY",
+  "validation_definitions": [
+    {
+      "id": "9e936b02-6611-4b17-8b6d-69de14f265ad",
+      "name": "silver.demand_5min"
+    },
+    {
+      "id": "2778cfa4-19a1-404c-ba12-e423aea76199",
+      "name": "silver.weather_hourly"
+    }
+  ]
+}

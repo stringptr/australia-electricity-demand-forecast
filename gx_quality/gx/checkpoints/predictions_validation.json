@@ -1,0 +1,12 @@
+{
+  "actions": [],
+  "id": "18377d7b-ba22-4bea-a540-3f6cd4eeeaad",
+  "name": "predictions_validation",
+  "result_format": "SUMMARY",
+  "validation_definitions": [
+    {
+      "id": "2e1d5292-8a40-4aca-afe7-85c44a19a744",
+      "name": "silver.predictions"
+    }
+  ]
+}

@@ -1,0 +1,176 @@
+{
+  "expectations": [
+    {
+      "id": "2b09ca68-fd64-4b28-918c-8b4a0189beaa",
+      "kwargs": {
+        "max_value": 10000000,
+        "min_value": 1
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_table_row_count_to_be_between"
+    },
+    {
+      "id": "208e386d-623d-4e20-8bbb-27720f46bd6c",
+      "kwargs": {
+        "column": "time"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "7d7ef63c-5da1-4217-9d20-1d9de25f26ba",
+      "kwargs": {
+        "column": "region_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "10352b33-65f6-40e7-a667-dac8847ddc37",
+      "kwargs": {
+        "column": "demand_mw"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "6e787291-0cf9-424b-a270-aa9f1faf2813",
+      "kwargs": {
+        "column": "hour"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "9630f41a-44dc-45b5-948c-4d48ffc1e2ec",
+      "kwargs": {
+        "column": "day_of_week"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "6614d835-4624-408a-816c-85db797a8b9a",
+      "kwargs": {
+        "column": "is_weekend"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "07f9681e-aa35-4930-ac74-fd9dd904f3a1",
+      "kwargs": {
+        "column": "month"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "fd330015-2e8d-423b-ab51-f998fcd8d6be",
+      "kwargs": {
+        "column": "season"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "4c7c4d83-ccc9-402c-9689-2b46e447a8c6",
+      "kwargs": {
+        "column": "region_id",
+        "value_set": [
+          "NSW1",
+          "QLD1",
+          "SA1",
+          "TAS1",
+          "VIC1"
+        ]
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_in_set"
+    },
+    {
+      "id": "a60ea167-0786-4187-811a-0ac68b5c5b2f",
+      "kwargs": {
+        "column": "demand_mw",
+        "max_value": 20000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "116b7172-52c6-453d-a4c6-570b84f64bb7",
+      "kwargs": {
+        "column": "hour",
+        "max_value": 23.0,
+        "min_value": 0.0
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "9832f6f8-57d9-4dc8-aac0-409d7fb4b269",
+      "kwargs": {
+        "column": "day_of_week",
+        "max_value": 6.0,
+        "min_value": 0.0
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "02018e0b-978c-4086-b331-dee2c4c7f789",
+      "kwargs": {
+        "column": "month",
+        "max_value": 12.0,
+        "min_value": 1.0
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "2969ed7b-80d9-460a-a1fa-00ffd65320e2",
+      "kwargs": {
+        "column": "season",
+        "max_value": 4.0,
+        "min_value": 1.0
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "6148a076-46b7-42ee-b851-591a23b86ee7",
+      "kwargs": {
+        "column_list": [
+          "time",
+          "region_id"
+        ]
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_compound_columns_to_be_unique"
+    }
+  ],
+  "id": "cc0dffc2-27c8-4f47-83df-b67f6f64ba17",
+  "meta": {
+    "great_expectations_version": "1.18.2"
+  },
+  "name": "silver.features_ml",
+  "notes": null
+}

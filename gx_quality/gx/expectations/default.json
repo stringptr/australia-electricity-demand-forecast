@@ -1,0 +1,66 @@
+{
+  "expectations": [
+    {
+      "id": "78013482-37e5-4b4d-bcf6-f37e3e0aa2f4",
+      "kwargs": {
+        "max_value": 10000000,
+        "min_value": 1
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_table_row_count_to_be_between"
+    },
+    {
+      "id": "5acd766c-932b-417d-8806-2a669f79e423",
+      "kwargs": {
+        "column": "time"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "3129f0a8-90db-4816-91cb-b1235e04a41b",
+      "kwargs": {
+        "column": "region_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "5e2c925a-d8f4-410f-bce7-b77eb40d9f16",
+      "kwargs": {
+        "column": "region_id",
+        "value_set": [
+          "NSW1",
+          "QLD1",
+          "SA1",
+          "TAS1",
+          "VIC1"
+        ]
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_in_set"
+    },
+    {
+      "id": "5eb60fc8-a3de-4582-b9df-763466155907",
+      "kwargs": {
+        "column": "demand_mw",
+        "max_value": 20000.0,
+        "min_value": 0.0,
+        "mostly": 0.9
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    }
+  ],
+  "id": "7c53ba46-1e33-44cd-aeff-f9290d787153",
+  "meta": {
+    "great_expectations_version": "1.18.2"
+  },
+  "name": "default",
+  "notes": null
+}

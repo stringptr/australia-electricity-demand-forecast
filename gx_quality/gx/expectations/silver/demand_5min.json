@@ -1,0 +1,87 @@
+{
+  "expectations": [
+    {
+      "id": "c0223294-c746-4959-9d29-6277457af5da",
+      "kwargs": {
+        "max_value": 10000000,
+        "min_value": 1
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_table_row_count_to_be_between"
+    },
+    {
+      "id": "3ae091e0-12f9-4945-b602-8a023a627fe7",
+      "kwargs": {
+        "column": "time"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "26fc53aa-adee-4628-9ff8-69fab200477a",
+      "kwargs": {
+        "column": "region_id"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "7856f0ee-1ff6-4273-9edc-c707b83688db",
+      "kwargs": {
+        "column": "demand_mw"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "32a6c460-bd13-4738-909a-65543897dab2",
+      "kwargs": {
+        "column": "region_id",
+        "value_set": [
+          "NSW1",
+          "QLD1",
+          "SA1",
+          "TAS1",
+          "VIC1"
+        ]
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_in_set"
+    },
+    {
+      "id": "83dbc37d-939e-4f1d-83fa-c49f216a14a6",
+      "kwargs": {
+        "column": "demand_mw",
+        "max_value": 20000.0,
+        "min_value": 0.0,
+        "mostly": 0.95
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "6a9d9815-3690-4075-ac08-687df543b4c3",
+      "kwargs": {
+        "column_list": [
+          "time",
+          "region_id"
+        ]
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_compound_columns_to_be_unique"
+    }
+  ],
+  "id": "99e6054c-c45b-4f09-87b8-896193fadfbc",
+  "meta": {
+    "great_expectations_version": "1.18.2"
+  },
+  "name": "silver.demand_5min",
+  "notes": null
+}

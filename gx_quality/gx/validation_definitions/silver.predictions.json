@@ -1,0 +1,22 @@
+{
+  "data": {
+    "asset": {
+      "id": "1c784ae8-758a-4395-b8d2-2be823a46b57",
+      "name": "silver_predictions"
+    },
+    "batch_definition": {
+      "id": "10039894-8d72-4a44-bf7d-a3ece1bd6f4e",
+      "name": "silver.predictions_batch"
+    },
+    "datasource": {
+      "id": "21b9fb03-500d-4042-b0e4-3d306c226631",
+      "name": "electricity_db"
+    }
+  },
+  "id": "2e1d5292-8a40-4aca-afe7-85c44a19a744",
+  "name": "silver.predictions",
+  "suite": {
+    "id": "5ee82658-a0ca-430c-b2df-3e7a676580cb",
+    "name": "silver.predictions"
+  }
+}

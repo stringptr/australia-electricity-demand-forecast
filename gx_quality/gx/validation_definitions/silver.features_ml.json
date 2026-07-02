@@ -1,0 +1,22 @@
+{
+  "data": {
+    "asset": {
+      "id": "d1da1ca2-1b95-48e5-9089-922e81446d28",
+      "name": "silver_features_ml"
+    },
+    "batch_definition": {
+      "id": "9db26337-8acc-455e-a810-35d88c79b976",
+      "name": "silver.features_ml_batch"
+    },
+    "datasource": {
+      "id": "21b9fb03-500d-4042-b0e4-3d306c226631",
+      "name": "electricity_db"
+    }
+  },
+  "id": "6b47d17d-ff75-421f-ae25-8cbfb21f9764",
+  "name": "silver.features_ml",
+  "suite": {
+    "id": "cc0dffc2-27c8-4f47-83df-b67f6f64ba17",
+    "name": "silver.features_ml"
+  }
+}
