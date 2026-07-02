@@ -15,6 +15,9 @@ mutation LaunchRunForAssets {
   launchRun(
     executionParams: {
       selector: {
+        repositoryLocationName: "user_code"
+        repositoryName: "__repository__"
+        jobName: "__ASSET_JOB"
         assetSelection: {
           assetKeys: [
             {path: ["silver", "demand_5min"]},
@@ -28,6 +31,7 @@ mutation LaunchRunForAssets {
     __typename
     ... on LaunchRunSuccess { runId }
     ... on RunLaunchFailure { message }
+    ... on PythonError { message }
   }
 }
 """
