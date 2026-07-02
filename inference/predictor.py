@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 import pandas as pd
 from xgboost import XGBRegressor
 
+from shared.alerts import send_alert
+
 from . import metrics
 from .config import HISTORY_LOOKBACK_HOURS, REGIONS
 from .features import assemble_feature_matrix
@@ -12,6 +14,8 @@ from .forecast import fetch_forecast_all_regions
 from .store import fetch_demand_history, store_predictions
 
 logger = logging.getLogger(__name__)
+
+_skip_counts: dict[str, int] = {}
 
 
 def run_inference_cycle(
@@ -36,6 +40,11 @@ def run_inference_cycle(
     if forecast_df.empty:
         logger.warning("No forecast available, skipping")
         metrics.push("inference_skipped_total", 1.0, {"reason": "no_forecast"})
+        send_alert(
+            f"No forecast available for inference cycle at *{current_time}*",
+            level="WARNING",
+            throttle_key="inference_no_forecast",
+        )
         return
 
     X = assemble_feature_matrix(history, forecast_df, current_time)
@@ -49,11 +58,20 @@ def run_inference_cycle(
             metrics.push("inference_skipped_total", 1.0, {"reason": "no_model", "region": region_id})
             continue
 
-        pred = model.predict(X[idx : idx + 1])[0]
-        predictions[region_id] = pred.tolist()
-        logger.info("  %s: %s...%s MW", region_id,
-                     ", ".join(f"{v:.0f}" for v in pred[:3]),
-                     ", ".join(f"{v:.0f}" for v in pred[-2:]))
+        try:
+            pred = model.predict(X[idx : idx + 1])[0]
+            predictions[region_id] = pred.tolist()
+            logger.info("  %s: %s...%s MW", region_id,
+                         ", ".join(f"{v:.0f}" for v in pred[:3]),
+                         ", ".join(f"{v:.0f}" for v in pred[-2:]))
+        except Exception as e:
+            logger.exception("Prediction failed for %s", region_id)
+            metrics.increment("inference_failed_total", {"reason": "predict_error", "region": region_id})
+            send_alert(
+                f"Prediction failed for region *{region_id}*: `{e}`",
+                level="CRITICAL",
+                throttle_key=f"inference_fail_{region_id}",
+            )
 
     store_predictions(predictions, current_time)
 

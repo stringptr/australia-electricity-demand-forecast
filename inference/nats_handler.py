@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 
 import nats
 
+from shared.alerts import send_alert
+
 from . import metrics
 from .config import NATS_SUBJECT, NATS_URL, REGIONS
 
@@ -48,6 +50,12 @@ async def run_nats_loop(on_inference_trigger) -> None:
             data = json.loads(msg.data)
         except json.JSONDecodeError:
             logger.warning("Invalid JSON in NATS message, skipping")
+            send_alert(
+                "Invalid JSON received from NATS stream",
+                level="WARNING",
+                throttle_key="nats_json_error",
+                throttle_seconds=300,
+            )
             return
 
         payload = data.get("payload", {})
@@ -85,8 +93,14 @@ async def run_nats_loop(on_inference_trigger) -> None:
                         msg_time, _nats_msg_count, _nats_trigger_count)
             try:
                 await on_inference_trigger(msg_time)
-            except Exception:
+            except Exception as e:
                 logger.exception("Inference cycle failed at %s", msg_time)
+                metrics.increment("inference_failed_total", {"reason": "cycle_exception"})
+                send_alert(
+                    f"Inference cycle failed at *{msg_time}*: `{e}`",
+                    level="CRITICAL",
+                    throttle_key="inference_cycle_fail",
+                )
                 trigger.reset_last_hour()
 
     js = nc.jetstream()

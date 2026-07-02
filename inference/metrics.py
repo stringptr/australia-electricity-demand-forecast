@@ -12,6 +12,7 @@ VM_URL = os.environ.get(
 
 last_demand_time: dict[str, float] = {}
 
+
 def _fmt_labels(labels: dict | None) -> str:
     if not labels:
         return ""
@@ -32,3 +33,12 @@ def push(name: str, value: float, labels: dict | None = None) -> None:
         urllib.request.urlopen(req, timeout=5)
     except Exception as e:
         logger.warning("Failed to push %s to VM: %s", name, e)
+
+
+_counters: dict[str, float] = {}
+
+
+def increment(name: str, labels: dict | None = None) -> None:
+    key = f"{name}{'|' + str(labels) if labels else ''}"
+    _counters[key] = _counters.get(key, 0) + 1
+    push(name, _counters[key], labels)

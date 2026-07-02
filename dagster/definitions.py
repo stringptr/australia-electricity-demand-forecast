@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 
+sys.path.insert(0, "/opt/dagster/app")
 sys.path.insert(0, "/opt/dagster/dlt")
 
 from dagster import AssetCheckResult, AssetCheckSeverity, Definitions, asset_check
@@ -18,6 +19,8 @@ from jobs.historical_load import historical_backfill
 from jobs.train_model import train_multi_output_xgboost
 from jobs.validate_data import validate_data
 from jobs.gold_correlation import build_gold_correlation
+
+from hooks import alert_on_failure
 
 from resources.postgres_io_manager import PostgresIOManager
 
@@ -55,9 +58,20 @@ def _run_gx_checkpoint(context, cp_name: str) -> AssetCheckResult:
         success += s.get("successful_expectations", 0)
         failed += s.get("unsuccessful_expectations", 0)
 
+    if not passed:
+        from shared.alerts import send_alert
+        send_alert(
+            f"GX asset check *{cp_name}* FAILED\n"
+            f"Expectations: {success}/{total} passed\n"
+            f"Failures: *{failed}*",
+            level="WARNING",
+            throttle_key=f"gx_asset_{cp_name}",
+            throttle_seconds=600,
+        )
+
     return AssetCheckResult(
         passed=passed,
-        severity=AssetCheckSeverity.WARN,
+        severity=AssetCheckSeverity.ERROR,
         metadata={
             "checkpoint": cp_name,
             "expectations_total": total,
@@ -126,9 +140,9 @@ defs = Definitions(
         ),
     },
     jobs=[
-        historical_backfill,
-        train_multi_output_xgboost,
-        validate_data,
-        build_gold_correlation,
+        historical_backfill.with_hooks({alert_on_failure}),
+        train_multi_output_xgboost.with_hooks({alert_on_failure}),
+        validate_data.with_hooks({alert_on_failure}),
+        build_gold_correlation.with_hooks({alert_on_failure}),
     ],
 )

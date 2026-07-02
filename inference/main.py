@@ -4,6 +4,7 @@ import signal
 import threading
 import time
 
+from shared.alerts import send_alert
 from shared.logging import setup_json_logging
 
 from . import metrics
@@ -18,6 +19,8 @@ logger = logging.getLogger("inference")
 
 _inference_busy = threading.Lock()
 
+STALENESS_THRESHOLD = 900
+
 
 def _staleness_loop(stop_event: threading.Event) -> None:
     while not stop_event.is_set():
@@ -31,6 +34,14 @@ def _staleness_loop(stop_event: threading.Event) -> None:
                     staleness,
                     {"region": region_id},
                 )
+                if staleness > STALENESS_THRESHOLD:
+                    send_alert(
+                        f"Region *{region_id}*: demand staleness *{int(staleness)}s* "
+                        f"(threshold: {STALENESS_THRESHOLD}s)",
+                        level="WARNING",
+                        throttle_key=f"staleness_{region_id}",
+                        throttle_seconds=600,
+                    )
         stop_event.wait(timeout=30)
 
 

@@ -1,4 +1,12 @@
+import sys
+
+sys.path.insert(0, "/opt/dagster/app")
+sys.path.insert(0, "/opt/dagster/dlt")
+
 from dagster import job, op
+
+from shared.alerts import send_alert
+
 from gx_quality.context import get_context
 from gx_quality.setup_expectations import CHECKPOINT_GROUPS
 from gx_quality.setup_expectations import setup_all as gx_setup_all
@@ -30,6 +38,14 @@ def _run_cp(context, cp_name):
             success,
             total,
             failed,
+        )
+        send_alert(
+            f"GX checkpoint *{cp_name}* FAILED\n"
+            f"Expectations: {success}/{total} passed\n"
+            f"Failures: *{failed}*",
+            level="WARNING",
+            throttle_key=f"gx_{cp_name}",
+            throttle_seconds=600,
         )
 
     context.add_output_metadata(

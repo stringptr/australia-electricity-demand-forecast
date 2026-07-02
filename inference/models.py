@@ -5,6 +5,7 @@ import mlflow
 from mlflow.exceptions import RestException
 from xgboost import XGBRegressor
 
+from shared.alerts import send_alert
 from shared.retry import retry
 
 from .config import MLFLOW_TRACKING_URI, REGIONS
@@ -24,14 +25,32 @@ def load_models() -> dict[str, XGBRegressor]:
     mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
     models = {}
+    failed_regions = []
     for region in REGIONS:
         model_uri = f"models:/xgb_multi_{region}/latest"
         logger.info("Loading model: %s", model_uri)
-        models[region] = retry(
-            lambda: mlflow.xgboost.load_model(model_uri),
-            max_retries=5, delay=2, exceptions=_RETRYABLE,
-        )()
-        logger.info("Loaded %s: %s estimators, %s features",
-                     region, models[region].n_estimators, models[region].n_features_in_)
+        try:
+            models[region] = retry(
+                lambda: mlflow.xgboost.load_model(model_uri),
+                max_retries=None,
+                delay=2,
+                exceptions=_RETRYABLE,
+            )()
+            logger.info(
+                "Loaded %s: %s estimators, %s features",
+                region,
+                models[region].n_estimators,
+                models[region].n_features_in_,
+            )
+        except Exception as e:
+            logger.exception("Failed to load model for %s after retries", region)
+            failed_regions.append(region)
+
+    if failed_regions:
+        send_alert(
+            f"Model loading failed for regions: *{', '.join(failed_regions)}*",
+            level="CRITICAL",
+            throttle_key="model_load_fail",
+        )
 
     return models

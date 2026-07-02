@@ -278,6 +278,7 @@ services:
       - ./dlt:/opt/dagster/dlt
       - ./dbt:/opt/dagster/dbt
       - ./gx_quality:/opt/dagster/app/gx_quality
+      - ./shared:/opt/dagster/app/shared:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -448,6 +449,8 @@ services:
       PG_DB: ${POSTGRES_DB:-electricity}
       NATS_URL: nats://nats:4222
       NATS_SUBJECT: electricity.silver.demand_5min
+      TELEGRAM_BOT_API_KEY: ${TELEGRAM_BOT_API_KEY:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
     depends_on:
       debezium-server:
         condition: service_healthy
@@ -572,6 +575,18 @@ services:
         condition: service_healthy
       victoriametrics:
         condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     networks:
       - devnet
     profiles: ["dev"]
@@ -609,6 +624,32 @@ services:
       - ${HOST_IP:-127.0.0.1}:8080:80
     volumes:
       - ./configs/dashboard/Caddyfile:/etc/caddy/Caddyfile:ro
+    networks:
+      - devnet
+    profiles: ["dev"]
+
+  monitor:
+    <<: *default-logging
+    build:
+      context: .
+      dockerfile: monitor/Containerfile
+    restart: unless-stopped
+    environment:
+      PG_HOST: postgres
+      PG_PORT: 5432
+      NATS_URL: nats://nats:8222
+      DEBEZIUM_URL: http://debezium-server:8080
+      VM_URL: http://victoriametrics:8428
+      CHECK_INTERVAL: "60"
+      TELEGRAM_BOT_API_KEY: ${TELEGRAM_BOT_API_KEY:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+    volumes:
+      - ./shared:/app/shared:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      victoriametrics:
+        condition: service_healthy
     networks:
       - devnet
     profiles: ["dev"]
