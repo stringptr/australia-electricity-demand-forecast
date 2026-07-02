@@ -193,6 +193,7 @@ def run_nemweb_pipeline() -> list[dict]:
         pipeline_name="demand_nemweb",
         destination="postgres",
         dataset_name="bronze",
+        pipelines_dir="/tmp/dlt/demand_nemweb",
     )
     pipeline.run(
         all_rows,

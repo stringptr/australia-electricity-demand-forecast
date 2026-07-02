@@ -26,6 +26,7 @@ def run_demand_pipeline(year: int) -> None:
         pipeline_name="demand_openelectricity",
         destination="postgres",
         dataset_name="bronze",
+        pipelines_dir="/tmp/dlt/demand_openelectricity",
     )
 
     now = datetime.now()
