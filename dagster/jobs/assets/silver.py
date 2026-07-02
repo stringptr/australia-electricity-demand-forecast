@@ -27,7 +27,10 @@ def dbt_silver_assets(context: AssetExecutionContext, dbt: DbtCliResource):
         try:
             context.log.error(f"dbt returncode: {invocation.process.returncode}")
             out = invocation.process.stdout.read().decode() if invocation.process.stdout else ""
+            err = invocation.process.stderr.read().decode() if invocation.process.stderr else ""
             context.log.error(f"dbt stdout:\n{out[:5000]}")
+            if err:
+                context.log.error(f"dbt stderr:\n{err[:5000]}")
         except Exception as log_err:
             context.log.error(f"Could not capture dbt output: {log_err}")
         raise
