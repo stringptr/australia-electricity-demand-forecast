@@ -32,7 +32,7 @@ signal.signal(signal.SIGTERM, _signal_handler)
 
 
 def _wait_for_backfill():
-    """Block startup until bronze.demand has recent data (backfill done)."""
+    """Block startup until bronze.demand has any data (or timeout after 10 min)."""
     conn = psycopg2.connect(
         host=os.getenv("POSTGRES_HOST", "postgres"),
         port=os.getenv("POSTGRES_PORT", "5432"),
@@ -42,21 +42,21 @@ def _wait_for_backfill():
     )
 
     logger.info("WAIT: checking bronze.demand for backfill data ...")
+    deadline = time.time() + 600
     try:
-        while running:
+        while running and time.time() < deadline:
             cur = conn.cursor()
-            cur.execute(
-                "SELECT COUNT(*) FROM bronze.demand WHERE time >= NOW() - INTERVAL '1 hour'"
-            )
+            cur.execute("SELECT COUNT(*) FROM bronze.demand")
             count = cur.fetchone()[0]
             cur.close()
 
             if count > 0:
-                logger.info("Backfill confirmed: %d rows in last hour", count)
+                logger.info("Backfill confirmed: %d rows in bronze.demand", count)
                 return
 
-            logger.info("No recent data yet, retrying in 10s ...")
+            logger.info("No data yet, retrying in 10s ...")
             time.sleep(10)
+        logger.info("Backfill wait timeout — proceeding anyway")
     finally:
         conn.close()
 

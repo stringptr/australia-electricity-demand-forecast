@@ -10,8 +10,7 @@ setup_json_logging("dlt-demand-nemweb")
 
 logger = logging.getLogger(__name__)
 
-POLL_INTERVAL = 60
-DAILY_LIMIT = 2000
+POLL_INTERVAL = os.getenv("POLL_INTERVAL", 30)
 
 running = True
 
@@ -30,7 +29,7 @@ def main() -> None:
     daily_req = 0
     last_reset_day = time.localtime().tm_yday
 
-    logger.info("START: NEMWEB DispatchIS scraper (daily limit: %d)", DAILY_LIMIT)
+    logger.info("START: NEMWEB DispatchIS scraper (daily limit: %d)")
 
     while running:
         now = time.time()
@@ -39,11 +38,6 @@ def main() -> None:
             daily_req = 0
             last_reset_day = time.localtime().tm_yday
             logger.info("Daily request counter reset")
-
-        if daily_req >= DAILY_LIMIT:
-            logger.warning("Daily limit reached (%d/%d), sleeping", daily_req, DAILY_LIMIT)
-            time.sleep(600)
-            continue
 
         daily_req += 1
         logger.info("FETCH (req #%d today) ...", daily_req)
