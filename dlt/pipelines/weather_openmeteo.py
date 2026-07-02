@@ -45,6 +45,7 @@ def run_weather_pipeline(year: int) -> None:
         pipeline_name="weather_openmeteo",
         destination="postgres",
         dataset_name="bronze",
+        pipelines_dir="/tmp/dlt/weather_openmeteo",
     )
 
     now = datetime.now()
