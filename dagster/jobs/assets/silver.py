@@ -20,4 +20,14 @@ class SilverTranslator(DagsterDbtTranslator):
     dagster_dbt_translator=SilverTranslator(),
 )
 def dbt_silver_assets(context: AssetExecutionContext, dbt: DbtCliResource):
-    yield from dbt.cli(["run", "--select", "silver"], context=context).stream()
+    invocation = dbt.cli(["run"], context=context)
+    try:
+        yield from invocation.stream()
+    except Exception:
+        try:
+            context.log.error(f"dbt returncode: {invocation.process.returncode}")
+            out = invocation.process.stdout.read().decode() if invocation.process.stdout else ""
+            context.log.error(f"dbt stdout:\n{out[:5000]}")
+        except Exception as log_err:
+            context.log.error(f"Could not capture dbt output: {log_err}")
+        raise
