@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import {
   ScatterChart,
   Scatter,
@@ -23,40 +23,47 @@ const COLORS = ['#F2A541', '#E8402B', '#22c55e', '#3b82f6', '#a855f7']
 const ScatterPlot: React.FC<ScatterPlotProps> = ({
   data, xKey, yKey, xLabel, yLabel, color = '#F2A541',
 }) => {
+  const chartData = useMemo(
+    () => data.map(d => ({ x: d[xKey], y: d[yKey] })),
+    [data, xKey, yKey]
+  )
+
   return (
     <div className="bg-void/40 border border-grid p-3">
       <ResponsiveContainer width="100%" height={220}>
         <ScatterChart margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#252529" />
           <XAxis
-            dataKey={xKey}
+            dataKey="x"
             stroke="#52525b"
-            tick={{ fontSize: 9, fontFamily: 'JetBrains Mono, monospace' }}
-            label={{ value: xLabel, fill: '#52525b', fontSize: 9, fontFamily: 'JetBrains Mono, monospace', position: 'bottom', offset: -2 }}
+            tick={{ fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
+            label={{ value: xLabel, fill: '#52525b', fontSize: 11, fontFamily: 'JetBrains Mono, monospace', position: 'bottom', offset: -2 }}
           />
           <YAxis
+            dataKey="y"
             stroke="#52525b"
-            tick={{ fontSize: 9, fontFamily: 'JetBrains Mono, monospace' }}
+            tick={{ fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
             tickFormatter={(v: number) => `${(v / 1000).toFixed(1)}k`}
-            label={{ value: 'Demand (MW)', fill: '#52525b', fontSize: 9, fontFamily: 'JetBrains Mono, monospace', angle: -90, position: 'insideLeft', offset: 0 }}
+            label={{ value: 'Demand (MW)', fill: '#52525b', fontSize: 11, fontFamily: 'JetBrains Mono, monospace', angle: -90, position: 'insideLeft', offset: 0 }}
           />
           <Tooltip
             contentStyle={{
               backgroundColor: '#141418',
               border: '1px solid #252529',
-              fontSize: '11px',
+              fontSize: '12px',
               fontFamily: 'JetBrains Mono, monospace',
             }}
             labelStyle={{ color: '#52525b' }}
             itemStyle={{ color: '#e4e4e7' }}
             formatter={(value: any, name: string) => {
-              if (name === 'demand_mw_avg' || name === 'demand_mw') return [`${Number(value).toLocaleString()} MW`, 'Demand']
-              return [Number(value).toFixed(1), xLabel]
+              if (name === 'y') return [`${Number(value).toLocaleString()} MW`, 'Demand']
+              if (name === 'x') return [Number(value).toFixed(1), xLabel]
+              return [value, name]
             }}
             labelFormatter={() => ''}
           />
           <Scatter
-            data={data}
+            data={chartData}
             fill={color}
             opacity={0.6}
             r={3}
