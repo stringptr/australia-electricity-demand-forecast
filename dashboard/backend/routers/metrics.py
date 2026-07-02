@@ -8,7 +8,7 @@ router = APIRouter(prefix="/metrics", tags=["metrics"])
 @router.get("/global")
 async def get_global_metrics():
     """Get global metrics: max demand (entire history), inference latency, staleness."""
-    max_demand = await fetchval("SELECT MAX(demand_mw) FROM silver.features_ml")
+    max_demand = await fetchval("SELECT MAX(demand_mw) FROM silver.demand_5min")
     
     # Round up to nearest 5000
     gradient_max = ((int(max_demand) + 4999) // 5000) * 5000 if max_demand else 20000

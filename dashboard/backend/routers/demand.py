@@ -10,7 +10,7 @@ async def get_latest_demand():
     rows = await fetch(
         """
         SELECT DISTINCT ON (region_id) region_id, time, demand_mw
-        FROM silver.features_ml
+        FROM silver.demand_5min
         ORDER BY region_id, time DESC
         """
     )
@@ -32,7 +32,7 @@ async def get_demand_history(region_id: str, hours: int = 24):
     rows = await fetch(
         """
         SELECT time, demand_mw
-        FROM silver.features_ml
+        FROM silver.demand_5min
         WHERE region_id = $1 AND time >= $2
         ORDER BY time
         """,
