@@ -21,7 +21,7 @@ interface DemandChartProps {
 const DemandChart: React.FC<DemandChartProps> = ({ data }) => {
   const formatTime = (timeStr: string) => {
     const d = new Date(timeStr)
-    return `${d.getHours()}:00`
+    return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`
   }
 
   // Find boundary between history and prediction

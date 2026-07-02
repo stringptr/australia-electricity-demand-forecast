@@ -3,7 +3,7 @@ import { useInsightData, useCorrelation } from '../hooks/useApiQuery'
 import RegionCheckboxes from './RegionCheckboxes'
 import DateRangePicker from './DateRangePicker'
 import ScatterPlot from './ScatterPlot'
-import CorrelationBarChart from './CorrelationBarChart'
+import CorrelationHeatmap from './CorrelationHeatmap'
 import TimeSeriesOverlay from './TimeSeriesOverlay'
 
 const WEATHER_VARS = [
@@ -61,7 +61,7 @@ const InsightPage: React.FC = () => {
             <div className="text-xs font-mono text-tactical-muted uppercase tracking-[0.2em] mb-2">
               Correlation Coefficients (Pearson's r)
             </div>
-            <CorrelationBarChart data={coefficients} />
+            <CorrelationHeatmap data={coefficients} />
           </div>
 
           <div className="mb-6">
