@@ -18,12 +18,45 @@ logger = logging.getLogger("health-monitor")
 CHECK_INTERVAL = int(os.environ.get("CHECK_INTERVAL", "60"))
 POSTGRES_HOST = os.environ.get("PG_HOST", "postgres")
 POSTGRES_PORT = int(os.environ.get("PG_PORT", "5432"))
+POSTGRES_DB = os.environ.get("PG_DB", "electricity")
+POSTGRES_USER = os.environ.get("PG_USER", "postgres")
+POSTGRES_PASSWORD = os.environ.get("PG_PASSWORD", "postgres")
 NATS_URL = os.environ.get("NATS_URL", "nats://nats:8222")
 DEBEZIUM_URL = os.environ.get("DEBEZIUM_URL", "http://debezium-server:8080")
 VM_URL = os.environ.get("VM_URL", "http://victoriametrics:8428")
+VM_API_URL = f"{VM_URL}/api/v1/import/prometheus"
 
 _failures: dict[str, int] = {}
 FAILURE_THRESHOLD = 2
+_accuracy_iteration = 0
+ACCURACY_INTERVAL = 5
+
+
+def _push_metric(name: str, value: float, labels: dict | None = None) -> None:
+    label_str = ",".join(f'{k}="{v}"' for k, v in sorted(labels.items())) if labels else ""
+    now = int(time.time())
+    line = f"{name}{{{label_str}}} {value} {now}\n"
+    try:
+        req = urllib.request.Request(
+            VM_API_URL,
+            data=line.encode(),
+            headers={"Content-Type": "text/plain"},
+            method="POST",
+        )
+        urllib.request.urlopen(req, timeout=5)
+    except Exception as e:
+        logger.warning("Failed to push %s: %s", name, e)
+
+
+def _get_pg_connection():
+    import psycopg2
+    return psycopg2.connect(
+        host=POSTGRES_HOST,
+        port=POSTGRES_PORT,
+        dbname=POSTGRES_DB,
+        user=POSTGRES_USER,
+        password=POSTGRES_PASSWORD,
+    )
 
 
 def _http_get(url: str, timeout: int = 5) -> bool:
@@ -122,30 +155,134 @@ def _alert_if_persistent(name: str, ok: bool) -> None:
         )
 
 
-def run_checks() -> None:
+def _push_health_metrics(checks_results: list[tuple[str, bool]]) -> None:
+    for name, ok in checks_results:
+        _push_metric("service_up", 1.0 if ok else 0.0, {"service": name})
+
+
+def _push_pipeline_latency() -> None:
+    try:
+        conn = _get_pg_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT COALESCE(MAX(EXTRACT(EPOCH FROM (updated_at - time))), 0)
+            FROM silver.demand_5min
+            WHERE updated_at > NOW() - INTERVAL '5 minutes'
+        """)
+        row = cur.fetchone()
+        latency = float(row[0]) if row else 0.0
+        cur.close()
+        conn.close()
+        _push_metric("pipeline_latency_seconds", latency)
+    except Exception as e:
+        logger.warning("Pipeline latency query failed: %s", e)
+
+
+def _evaluate_accuracy() -> None:
+    try:
+        conn = _get_pg_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT p.region_id, p.created_at,
+                   p.horizon_h01, p.horizon_h02, p.horizon_h03, p.horizon_h04,
+                   p.horizon_h05, p.horizon_h06, p.horizon_h07, p.horizon_h08,
+                   p.horizon_h09, p.horizon_h10, p.horizon_h11, p.horizon_h12,
+                   p.horizon_h13, p.horizon_h14, p.horizon_h15, p.horizon_h16,
+                   p.horizon_h17, p.horizon_h18, p.horizon_h19, p.horizon_h20,
+                   p.horizon_h21, p.horizon_h22, p.horizon_h23, p.horizon_h24
+            FROM silver.predictions p
+            WHERE p.created_at >= NOW() - INTERVAL '48 hours'
+              AND p.created_at < NOW() - INTERVAL '24 hours'
+            ORDER BY p.created_at DESC
+            LIMIT 50
+        """)
+        predictions = cur.fetchall()
+
+        if not predictions:
+            cur.close()
+            conn.close()
+            return
+
+        regions = {}
+        for row in predictions:
+            region_id = row[0]
+            created_at = row[1]
+            horizons = row[2:]
+
+            for h_idx, predicted in enumerate(horizons):
+                if predicted is None or predicted <= 0:
+                    continue
+
+                h = h_idx + 1
+                expected_time = created_at + __import__("datetime").timedelta(hours=h)
+
+                cur.execute("""
+                    SELECT demand_mw FROM silver.features_ml
+                    WHERE region_id = %s AND time = %s
+                """, (region_id, expected_time))
+                actual_row = cur.fetchone()
+
+                if actual_row and actual_row[0] and actual_row[0] > 0:
+                    actual = actual_row[0]
+                    mape = abs((actual - predicted) / actual) * 100
+
+                    key = (region_id, h)
+                    if key not in regions:
+                        regions[key] = []
+                    regions[key].append(mape)
+
+        for (region_id, horizon), mapes in regions.items():
+            avg_mape = sum(mapes) / len(mapes)
+            _push_metric("prediction_mape", avg_mape, {
+                "region": region_id,
+                "horizon": str(horizon),
+            })
+
+        cur.close()
+        conn.close()
+        logger.info("Accuracy evaluation done: %d region/horizon combinations", len(regions))
+    except Exception as e:
+        logger.warning("Accuracy evaluation failed: %s", e)
+
+
+def run_checks() -> list[tuple[str, bool]]:
     checks = [
         ("PostgreSQL", _check_postgres),
         ("NATS", _check_nats),
         ("Debezium", _check_debezium),
         ("VictoriaMetrics", _check_victoriametrics),
     ]
+    results = []
     for name, check_fn in checks:
         ok = check_fn()
         _alert_if_persistent(name, ok)
+        results.append((name, ok))
 
+    _push_health_metrics(results)
     _check_vm_disk()
     _check_inference_staleness()
+    _push_pipeline_latency()
+
+    return results
 
 
 def main() -> None:
+    global _accuracy_iteration
     logger.info(
-        "Health monitor started (interval=%ds, threshold=%d)",
+        "Health monitor started (interval=%ds, threshold=%d, accuracy_every=%d)",
         CHECK_INTERVAL,
         FAILURE_THRESHOLD,
+        ACCURACY_INTERVAL,
     )
     while True:
         try:
             run_checks()
+
+            _accuracy_iteration += 1
+            if _accuracy_iteration % ACCURACY_INTERVAL == 0:
+                _evaluate_accuracy()
+                _accuracy_iteration = 0
         except Exception as e:
             logger.exception("Health check loop error: %s", e)
         time.sleep(CHECK_INTERVAL)

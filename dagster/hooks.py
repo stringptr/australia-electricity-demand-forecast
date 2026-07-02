@@ -3,12 +3,12 @@ import sys
 sys.path.insert(0, "/opt/dagster/app")
 sys.path.insert(0, "/opt/dagster/dlt")
 
-from dagster import HookContext, hook
+from dagster import HookContext, failure_hook, success_hook
 
 from shared.alerts import send_alert
 
 
-@hook
+@failure_hook
 def alert_on_failure(context: HookContext):
     send_alert(
         f"Dagster job *{context.job_name}* FAILED\n"
@@ -20,7 +20,7 @@ def alert_on_failure(context: HookContext):
     )
 
 
-@hook
+@success_hook
 def alert_on_success(context: HookContext):
     send_alert(
         f"Dagster job *{context.job_name}* completed successfully\n"

@@ -10,7 +10,7 @@ from shared.logging import setup_json_logging
 from core.nats_manager import manager
 from core.db import close_pool, get_pool
 from core.duck import close_duck
-from routers import demand, predictions, metrics, websocket, insight
+from routers import demand, predictions, metrics, websocket, insight, monitoring
 
 setup_json_logging("dashboard-backend")
 logger = logging.getLogger(__name__)
@@ -40,6 +40,7 @@ app.include_router(predictions.router)
 app.include_router(metrics.router)
 app.include_router(websocket.router)
 app.include_router(insight.router)
+app.include_router(monitoring.router)
 
 
 def _check_postgres() -> bool:

@@ -637,6 +637,9 @@ services:
     environment:
       PG_HOST: postgres
       PG_PORT: 5432
+      PG_DB: ${POSTGRES_DB:-electricity}
+      PG_USER: ${POSTGRES_USER:-postgres}
+      PG_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       NATS_URL: nats://nats:8222
       DEBEZIUM_URL: http://debezium-server:8080
       VM_URL: http://victoriametrics:8428

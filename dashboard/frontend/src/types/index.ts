@@ -63,3 +63,37 @@ export interface CorrelationResult {
   r: number | null;
   n: number;
 }
+
+export interface MonitoringAccuracyItem {
+  region: string;
+  horizon: number;
+  mape: number;
+}
+
+export interface MonitoringAccuracyResponse {
+  regions: Record<string, MonitoringAccuracyItem[]>;
+  items: MonitoringAccuracyItem[];
+}
+
+export interface MonitoringUptimeService {
+  name: string;
+  status: 'up' | 'down';
+  uptime_24h: number | null;
+  uptime_7d: number | null;
+}
+
+export interface MonitoringUptimeResponse {
+  services: MonitoringUptimeService[];
+}
+
+export interface MonitoringLatencyTrend {
+  time: number;
+  value: number;
+}
+
+export interface MonitoringLatencyResponse {
+  latest: number;
+  trend: MonitoringLatencyTrend[];
+  threshold_warning: number;
+  threshold_critical: number;
+}

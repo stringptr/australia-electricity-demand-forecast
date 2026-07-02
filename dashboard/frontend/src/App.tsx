@@ -10,8 +10,9 @@ import GradientLegend from './components/GradientLegend'
 import LiveIndicator from './components/LiveIndicator'
 import OrbitalGlobe from './components/OrbitalGlobe'
 import InsightPage from './components/InsightPage'
+import MonitoringPage from './components/MonitoringPage'
 
-type Page = 'map' | 'insight'
+type Page = 'map' | 'insight' | 'monitoring'
 
 function App() {
   const [page, setPage] = useState<Page>('map')
@@ -97,6 +98,15 @@ function App() {
             >
               Insight
             </button>
+            <button
+              onClick={() => setPage('monitoring')}
+              className={`px-3 py-1 text-[10px] font-mono uppercase tracking-[0.2em] transition-colors border ${page === 'monitoring'
+                ? 'text-accent-yorange border-accent-yorange'
+                : 'text-tactical-muted border-transparent hover:text-tactical-text hover:border-grid'
+                }`}
+            >
+              Monitoring
+            </button>
           </nav>
           <LiveIndicator connected={connected} />
         </div>
@@ -129,8 +139,10 @@ function App() {
               </div>
             )}
           </>
-        ) : (
+        ) : page === 'insight' ? (
           <InsightPage />
+        ) : (
+          <MonitoringPage />
         )}
       </main>
     </div>

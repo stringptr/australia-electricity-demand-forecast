@@ -92,3 +92,28 @@ export function useCorrelation(
     enabled: regionIds.length > 0,
   })
 }
+
+export function useMonitoringAccuracy(regionId?: string) {
+  const params = regionId ? `?region_id=${regionId}` : ''
+  return useQuery({
+    queryKey: ['monitoring', 'accuracy', regionId],
+    queryFn: ({ signal }) => fetchJson(`${API_BASE}/monitoring/accuracy${params}`, signal),
+    refetchInterval: 300000,
+  })
+}
+
+export function useMonitoringUptime() {
+  return useQuery({
+    queryKey: ['monitoring', 'uptime'],
+    queryFn: ({ signal }) => fetchJson(`${API_BASE}/monitoring/uptime`, signal),
+    refetchInterval: 60000,
+  })
+}
+
+export function useMonitoringLatency() {
+  return useQuery({
+    queryKey: ['monitoring', 'latency'],
+    queryFn: ({ signal }) => fetchJson(`${API_BASE}/monitoring/latency`, signal),
+    refetchInterval: 60000,
+  })
+}
