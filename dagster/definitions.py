@@ -5,7 +5,7 @@ import sys
 sys.path.insert(0, "/opt/dagster/app")
 sys.path.insert(0, "/opt/dagster/dlt")
 
-from dagster import AssetCheckResult, AssetCheckSeverity, Definitions, asset_check
+from dagster import AssetCheckResult, AssetCheckSeverity, DefaultScheduleStatus, Definitions, ScheduleDefinition, asset_check
 from dagster_dbt import DbtCliResource
 
 from jobs.assets.bronze import demand as bronze_demand
@@ -121,6 +121,15 @@ else:
     asset_checks = []
 
 
+gold_correlation_daily_schedule = ScheduleDefinition(
+    name="gold_correlation_daily_schedule",
+    cron_schedule="0 1 * * *",
+    target=["gold/correlation_daily"],
+    execution_timezone="Australia/Sydney",
+    default_status=DefaultScheduleStatus.RUNNING,
+)
+
+
 defs = Definitions(
     assets=[
         bronze_demand,
@@ -144,5 +153,8 @@ defs = Definitions(
         train_multi_output_xgboost.with_hooks({alert_on_failure}),
         validate_data.with_hooks({alert_on_failure}),
         build_gold_correlation.with_hooks({alert_on_failure}),
+    ],
+    schedules=[
+        gold_correlation_daily_schedule,
     ],
 )
