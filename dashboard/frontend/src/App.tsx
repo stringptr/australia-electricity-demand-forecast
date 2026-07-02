@@ -102,7 +102,7 @@ function App() {
         </div>
       </header>
 
-      <main className="flex-1 relative">
+      <main className="flex-1 relative flex flex-col overflow-hidden">
         {page === 'map' ? (
           <>
             <OrbitalGlobe />

@@ -35,14 +35,14 @@ const AccuracyChart: React.FC<AccuracyChartProps> = ({ data }) => {
           <XAxis
             dataKey="horizon"
             stroke="#52525b"
-            tick={{ fontSize: 8, fontFamily: 'JetBrains Mono, monospace' }}
+            tick={{ fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
             angle={-45}
             textAnchor="end"
             interval={2}
           />
           <YAxis
             stroke="#52525b"
-            tick={{ fontSize: 9, fontFamily: 'JetBrains Mono, monospace' }}
+            tick={{ fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
             domain={[0, 100]}
             tickFormatter={(v) => `${v}%`}
           />
@@ -50,7 +50,7 @@ const AccuracyChart: React.FC<AccuracyChartProps> = ({ data }) => {
             contentStyle={{
               backgroundColor: '#141418',
               border: '1px solid #252529',
-              fontSize: '11px',
+              fontSize: '12px',
               fontFamily: 'JetBrains Mono, monospace',
             }}
             labelStyle={{ color: '#52525b', fontFamily: 'JetBrains Mono, monospace' }}

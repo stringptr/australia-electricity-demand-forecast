@@ -37,19 +37,19 @@ const DemandChart: React.FC<DemandChartProps> = ({ data }) => {
             dataKey="time"
             tickFormatter={formatTime}
             stroke="#52525b"
-            tick={{ fontSize: 9, fontFamily: 'JetBrains Mono, monospace' }}
+            tick={{ fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
             interval="preserveStartEnd"
           />
           <YAxis
             stroke="#52525b"
-            tick={{ fontSize: 9, fontFamily: 'JetBrains Mono, monospace' }}
+            tick={{ fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
             tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
           />
           <Tooltip
             contentStyle={{
               backgroundColor: '#141418',
               border: '1px solid #252529',
-              fontSize: '11px',
+              fontSize: '12px',
               fontFamily: 'JetBrains Mono, monospace',
             }}
             labelStyle={{ color: '#52525b', fontFamily: 'JetBrains Mono, monospace' }}
@@ -65,7 +65,7 @@ const DemandChart: React.FC<DemandChartProps> = ({ data }) => {
               x={boundaryTime}
               stroke="#F2A541"
               strokeDasharray="5 5"
-              label={{ value: 'NOW', fill: '#F2A541', fontSize: 9, fontFamily: 'JetBrains Mono, monospace', position: 'top' }}
+              label={{ value: 'NOW', fill: '#F2A541', fontSize: 11, fontFamily: 'JetBrains Mono, monospace', position: 'top' }}
             />
           )}
           <Line

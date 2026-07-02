@@ -40,12 +40,12 @@ const CorrelationBarChart: React.FC<CorrelationBarChartProps> = ({ data }) => {
           <XAxis
             dataKey="label"
             stroke="#52525b"
-            tick={{ fontSize: 8, fontFamily: 'JetBrains Mono, monospace' }}
+            tick={{ fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
             interval={0}
           />
           <YAxis
             stroke="#52525b"
-            tick={{ fontSize: 9, fontFamily: 'JetBrains Mono, monospace' }}
+            tick={{ fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
             domain={[-1, 1]}
             tickFormatter={(v: number) => v.toFixed(1)}
           />
@@ -54,7 +54,7 @@ const CorrelationBarChart: React.FC<CorrelationBarChartProps> = ({ data }) => {
             contentStyle={{
               backgroundColor: '#141418',
               border: '1px solid #252529',
-              fontSize: '11px',
+              fontSize: '12px',
               fontFamily: 'JetBrains Mono, monospace',
             }}
             labelStyle={{ color: '#52525b' }}
