@@ -2,16 +2,17 @@ import os
 import time
 import signal
 import logging
+from datetime import datetime
 
 from shared.logging import setup_json_logging
-from pipelines.demand_nemweb import run_nemweb_pipeline
+from pipelines.weather_openmeteo import run_weather_pipeline
 from utils.triggers import trigger_silver_assets
 
-setup_json_logging("dlt-demand-nemweb")
+setup_json_logging("dlt-weather-poller")
 
 logger = logging.getLogger(__name__)
 
-POLL_INTERVAL = os.getenv("POLL_INTERVAL", 30)
+POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "300"))
 
 running = True
 
@@ -27,38 +28,27 @@ signal.signal(signal.SIGTERM, _signal_handler)
 
 
 def main() -> None:
-    daily_req = 0
-    last_reset_day = time.localtime().tm_yday
-
-    logger.info("START: NEMWEB DispatchIS scraper (daily limit: %d)")
+    logger.info("START: Open-Meteo weather poller (interval: %ds)", POLL_INTERVAL)
 
     while running:
-        now = time.time()
-
-        if time.localtime().tm_yday != last_reset_day:
-            daily_req = 0
-            last_reset_day = time.localtime().tm_yday
-            logger.info("Daily request counter reset")
-
-        daily_req += 1
-        logger.info("FETCH (req #%d today) ...", daily_req)
+        now = datetime.utcnow()
 
         try:
-            rows = run_nemweb_pipeline()
+            rows = run_weather_pipeline(now.year)
         except Exception:
             logger.exception("Pipeline error")
             time.sleep(POLL_INTERVAL)
             continue
 
         if rows:
-            logger.info("OK: %d new rows", len(rows))
+            logger.info("OK: %d new rows", rows)
             trigger_silver_assets()
         else:
             logger.info("No new data yet")
 
         time.sleep(POLL_INTERVAL)
 
-    logger.info("NEMWEB scraper stopped after %d requests", daily_req)
+    logger.info("Weather poller stopped")
 
 
 if __name__ == "__main__":
