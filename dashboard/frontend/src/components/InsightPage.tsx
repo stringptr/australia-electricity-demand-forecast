@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useInsightData, useCorrelation } from '../hooks/useApiQuery'
 import RegionCheckboxes from './RegionCheckboxes'
 import DateRangePicker from './DateRangePicker'
@@ -31,6 +31,37 @@ const InsightPage: React.FC = () => {
 
   const scatterData = insightData?.data || []
   const coefficients = correlationData?.coefficients || []
+
+  const timeSeriesData = useMemo(() => {
+    if (scatterData.length === 0) return []
+    const dateKey = 'date' in scatterData[0] ? 'date' : 'time'
+
+    const byDate = new Map<string, Record<string, number[]>>()
+    for (const row of scatterData) {
+      const d = row[dateKey]
+      if (!d) continue
+      if (!byDate.has(d)) byDate.set(d, { demand_mw_avg: [] })
+      const g = byDate.get(d)!
+      if (row.demand_mw_avg != null) g.demand_mw_avg.push(row.demand_mw_avg)
+      for (const wv of WEATHER_VARS) {
+        const v = row[wv.key]
+        if (v != null) {
+          if (!g[wv.key]) g[wv.key] = []
+          g[wv.key].push(v)
+        }
+      }
+    }
+
+    const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length
+    return [...byDate.entries()]
+      .map(([d, g]) => {
+        const entry: Record<string, any> = { [dateKey]: d }
+        entry.demand_mw_avg = mean(g.demand_mw_avg)
+        for (const wv of WEATHER_VARS) entry[wv.key] = g[wv.key] ? mean(g[wv.key]) : null
+        return entry
+      })
+      .sort((a, b) => (a[dateKey] as string).localeCompare(b[dateKey] as string))
+  }, [scatterData])
 
   const demandKey = 'demand_mw_avg'
   const selectedVar = WEATHER_VARS[0]
@@ -90,7 +121,7 @@ const InsightPage: React.FC = () => {
               Time Series: Demand + {selectedVar.label}
             </div>
             <TimeSeriesOverlay
-              data={scatterData}
+              data={timeSeriesData}
               varKey={selectedVar.key}
               varLabel={selectedVar.label}
               varColor={selectedVar.color}

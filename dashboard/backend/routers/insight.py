@@ -105,7 +105,7 @@ async def get_correlation(
     corr_exprs = []
     for var in WEATHER_VARS:
         col = DAILY_VAR_MAP[var]
-        corr_exprs.append(f"CORR(demand_mw_avg, {col}) AS {var}")
+        corr_exprs.append(f"CORR(demand_mw_avg, COALESCE({col}, 0)) AS {var}")
     corr_sql = ", ".join(corr_exprs)
 
     result = duck.execute(
