@@ -120,3 +120,22 @@ async def get_latency():
         "threshold_warning": 60,
         "threshold_critical": 300,
     }
+
+
+@router.get("/resources")
+async def get_resources():
+    """Get current system resource usage."""
+    cpu = await _vm_query("system_cpu_percent")
+    mem = await _vm_query("system_memory_percent")
+    disk = await _vm_query("system_disk_percent")
+
+    return {
+        "cpu": round(float(cpu[0]["value"][1]), 1) if cpu else 0.0,
+        "memory": round(float(mem[0]["value"][1]), 1) if mem else 0.0,
+        "disk": round(float(disk[0]["value"][1]), 1) if disk else 0.0,
+        "thresholds": {
+            "cpu": 90,
+            "memory": 80,
+            "disk": 80,
+        },
+    }

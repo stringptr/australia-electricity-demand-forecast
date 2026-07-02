@@ -97,3 +97,14 @@ export interface MonitoringLatencyResponse {
   threshold_warning: number;
   threshold_critical: number;
 }
+
+export interface MonitoringResourcesResponse {
+  cpu: number;
+  memory: number;
+  disk: number;
+  thresholds: {
+    cpu: number;
+    memory: number;
+    disk: number;
+  };
+}

@@ -16,6 +16,7 @@ import {
   useMonitoringAccuracy,
   useMonitoringUptime,
   useMonitoringLatency,
+  useMonitoringResources,
 } from '../hooks/useApiQuery'
 
 const REGIONS = ['NSW1', 'QLD1', 'SA1', 'TAS1', 'VIC1']
@@ -48,6 +49,58 @@ const formatLatency = (s: number) => {
 }
 
 const sectionHeader = 'text-xs font-mono text-tactical-muted uppercase tracking-[0.2em] mb-3'
+
+const ResourceGauge: React.FC<{ label: string; value: number; threshold: number; unit?: string }> = ({
+  label,
+  value,
+  threshold,
+  unit = '%',
+}) => {
+  const color = value > threshold ? '#E8402B' : value > threshold * 0.8 ? '#F4D35E' : '#22c55e'
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-mono text-tactical-muted uppercase tracking-wider">{label}</span>
+        <span className="text-sm font-mono font-bold" style={{ color }}>{value.toFixed(1)}{unit}</span>
+      </div>
+      <div className="h-1.5 bg-void/80 border border-grid overflow-hidden">
+        <div
+          className="h-full transition-all duration-500"
+          style={{ width: `${Math.min(value, 100)}%`, backgroundColor: color }}
+        />
+      </div>
+      <div className="flex justify-end">
+        <span className="text-[9px] font-mono text-tactical-muted">threshold: {threshold}{unit}</span>
+      </div>
+    </div>
+  )
+}
+
+const SystemResourcesSection: React.FC = () => {
+  const { data, isLoading } = useMonitoringResources()
+
+  if (isLoading) {
+    return (
+      <div className="bg-panel/90 border border-grid p-5">
+        <div className={sectionHeader}>System Resources</div>
+        <div className="text-tactical-muted font-mono text-xs">Loading resource data...</div>
+      </div>
+    )
+  }
+
+  const resources = data || { cpu: 0, memory: 0, disk: 0, thresholds: { cpu: 90, memory: 80, disk: 80 } }
+
+  return (
+    <div className="bg-panel/90 border border-grid p-5">
+      <div className={sectionHeader}>System Resources</div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <ResourceGauge label="CPU" value={resources.cpu} threshold={resources.thresholds.cpu} />
+        <ResourceGauge label="Memory" value={resources.memory} threshold={resources.thresholds.memory} />
+        <ResourceGauge label="Disk" value={resources.disk} threshold={resources.thresholds.disk} />
+      </div>
+    </div>
+  )
+}
 
 const AccuracySection: React.FC = () => {
   const [selectedRegion, setSelectedRegion] = useState<string>('NSW1')
@@ -316,11 +369,12 @@ const MonitoringPage: React.FC = () => {
           System Monitoring
         </h2>
         <p className="text-[10px] font-mono text-tactical-muted mt-1">
-          Model accuracy, service uptime, and pipeline latency
+          System resources, model accuracy, service uptime, and pipeline latency
         </p>
       </div>
 
       <div className="space-y-6">
+        <SystemResourcesSection />
         <UptimeSection />
         <AccuracySection />
         <LatencySection />

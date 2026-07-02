@@ -1,9 +1,12 @@
 import logging
 import os
+import shutil
 import sys
 import time
 import urllib.request
 import urllib.error
+
+import psutil
 
 sys.path.insert(0, "/app")
 
@@ -30,6 +33,10 @@ _failures: dict[str, int] = {}
 FAILURE_THRESHOLD = 2
 _accuracy_iteration = 0
 ACCURACY_INTERVAL = 5
+
+CPU_THRESHOLD = 90.0
+MEMORY_THRESHOLD = 80.0
+DISK_THRESHOLD = 80.0
 
 
 def _push_metric(name: str, value: float, labels: dict | None = None) -> None:
@@ -132,6 +139,42 @@ def _check_inference_staleness() -> bool:
         return True
     except Exception:
         return True
+
+
+def _check_system_resources() -> None:
+    try:
+        cpu = psutil.cpu_percent(interval=1)
+        mem = psutil.virtual_memory().percent
+        disk = shutil.disk_usage("/")
+        disk_pct = (disk.used / disk.total) * 100
+
+        _push_metric("system_cpu_percent", cpu)
+        _push_metric("system_memory_percent", mem)
+        _push_metric("system_disk_percent", disk_pct)
+
+        if cpu > CPU_THRESHOLD:
+            send_alert(
+                f"System CPU usage *{cpu:.1f}%* exceeds {CPU_THRESHOLD}%",
+                level="CRITICAL",
+                throttle_key="system_cpu",
+                throttle_seconds=600,
+            )
+        if mem > MEMORY_THRESHOLD:
+            send_alert(
+                f"System RAM usage *{mem:.1f}%* exceeds {MEMORY_THRESHOLD}%",
+                level="CRITICAL",
+                throttle_key="system_mem",
+                throttle_seconds=600,
+            )
+        if disk_pct > DISK_THRESHOLD:
+            send_alert(
+                f"System disk usage *{disk_pct:.1f}%* exceeds {DISK_THRESHOLD}%",
+                level="CRITICAL",
+                throttle_key="system_disk",
+                throttle_seconds=600,
+            )
+    except Exception as e:
+        logger.warning("System resource check failed: %s", e)
 
 
 def _alert_if_persistent(name: str, ok: bool) -> None:
@@ -263,6 +306,7 @@ def run_checks() -> list[tuple[str, bool]]:
     _check_vm_disk()
     _check_inference_staleness()
     _push_pipeline_latency()
+    _check_system_resources()
 
     return results
 
