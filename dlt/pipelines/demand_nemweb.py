@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 NEMWEB_URL = "https://www.nemweb.com.au/REPORTS/CURRENT/DispatchIS_Reports/"
 REGIONS = {"NSW1", "QLD1", "SA1", "TAS1", "VIC1"}
-POLL_INTERVAL = 60
 
 REGION_MAP = {
     "NEW SOUTH WALES": "NSW1",
@@ -44,7 +43,9 @@ def _list_remote_files() -> list[tuple[str, datetime]]:
             fname = m.group(3)
             dt = parsedate_to_datetime(date_str)
             if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=ZoneInfo("Australia/Sydney")).astimezone(timezone.utc)
+                dt = dt.replace(tzinfo=ZoneInfo("Australia/Sydney")).astimezone(
+                    timezone.utc
+                )
             files.append((fname, dt))
     return files
 
@@ -110,11 +111,13 @@ def _extract_demand_rows(parsed: list[dict]) -> list[dict]:
         if demand_mw < 0:
             continue
 
-        results.append({
-            "time": time_val,
-            "region_id": region_id,
-            "demand_mw": demand_mw,
-        })
+        results.append(
+            {
+                "time": time_val,
+                "region_id": region_id,
+                "demand_mw": demand_mw,
+            }
+        )
     return results
 
 
@@ -163,9 +166,7 @@ def run_nemweb_pipeline() -> list[dict]:
 
     if last_time is not None:
         logger.info("Latest data in DB: %s", last_time)
-        recent_files = [
-            (f, t) for f, t in files if t > last_time
-        ]
+        recent_files = [(f, t) for f, t in files if t > last_time]
         if not recent_files:
             files_to_process = files[:1]
         else:
@@ -198,5 +199,7 @@ def run_nemweb_pipeline() -> list[dict]:
         primary_key=("time", "region_id"),
     )
 
-    logger.info("Loaded %d rows into bronze.demand (latest: %s)", len(all_rows), max_time)
+    logger.info(
+        "Loaded %d rows into bronze.demand (latest: %s)", len(all_rows), max_time
+    )
     return all_rows
