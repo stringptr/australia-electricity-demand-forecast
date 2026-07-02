@@ -45,11 +45,15 @@ def _run_gx_checkpoint(context, cp_name: str) -> AssetCheckResult:
         cp = gx.checkpoints.get(cp_name)
 
     result = cp.run()
-    stats = result.to_json_dict().get("statistics", {})
     passed = result.success
-    total = stats.get("evaluated_expectations", 0)
-    success = stats.get("successful_expectations", 0)
-    failed = stats.get("unsuccessful_expectations", 0)
+    total = 0
+    success = 0
+    failed = 0
+    for vr in result.run_results.values():
+        s = vr.statistics
+        total += s.get("evaluated_expectations", 0)
+        success += s.get("successful_expectations", 0)
+        failed += s.get("unsuccessful_expectations", 0)
 
     return AssetCheckResult(
         passed=passed,
@@ -118,7 +122,7 @@ defs = Definitions(
         "dbt": DbtCliResource(
             project_dir=DBT_PROJECT_DIR,
             profiles_dir=DBT_PROFILES_DIR,
-            global_config_flags=["--no-use-color"],
+            global_config_flags=["--no-use-colors"],
         ),
     },
     jobs=[
