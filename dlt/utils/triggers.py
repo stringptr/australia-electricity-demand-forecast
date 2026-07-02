@@ -18,20 +18,23 @@ mutation LaunchRunForAssets {
         repositoryLocationName: "user_code"
         repositoryName: "__repository__"
         jobName: "__ASSET_JOB"
-        assetSelection: {
-          assetKeys: [
-            {path: ["silver", "demand_5min"]},
-            {path: ["silver", "weather_hourly"]},
-            {path: ["silver", "features_ml"]}
-          ]
-        }
+        assetSelection: [
+          {path: ["silver", "demand_5min"]},
+          {path: ["silver", "weather_hourly"]},
+          {path: ["silver", "features_ml"]}
+        ]
       }
     }
   ) {
     __typename
-    ... on LaunchRunSuccess { runId }
-    ... on RunLaunchFailure { message }
-    ... on PythonError { message }
+    ... on LaunchRunSuccess {
+      run {
+        runId
+      }
+    }
+    ... on Error {
+      message
+    }
   }
 }
 """
@@ -47,7 +50,8 @@ def trigger_silver_assets():
         else:
             result = data.get("data", {}).get("launchRun", {})
             if result.get("__typename") == "LaunchRunSuccess":
-                logger.info("Silver run launched: %s", result.get("runId"))
+                run_id = result.get("run", {}).get("runId", "unknown")
+                logger.info("Silver run launched: %s", run_id)
             else:
                 logger.warning("Dagster launch failed: %s", result.get("message"))
     except httpx.RequestError as e:
