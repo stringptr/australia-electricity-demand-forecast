@@ -1,10 +1,11 @@
+import csv
 import io
 import logging
 import os
 import re
 import zipfile
 from datetime import datetime, timezone
-from email.utils import parsedate_to_datetime
+
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -25,54 +26,56 @@ REGION_MAP = {
 }
 
 
+def _parse_settlement_time(fname: str) -> datetime:
+    ts = fname.split("_")[2]
+    dt = datetime.strptime(ts, "%Y%m%d%H%M")
+    dt = dt.replace(tzinfo=ZoneInfo("Australia/Sydney"))
+    return dt.astimezone(timezone.utc)
+
+
 def _list_remote_files() -> list[tuple[str, datetime]]:
     resp = httpx.get(NEMWEB_URL, timeout=30)
     resp.raise_for_status()
 
     files = []
     for line in resp.text.splitlines():
-        m = re.search(
+        for m in re.finditer(
             r"(\w+,\s+\w+\s+\d+,\s+\d{4}\s+\d{2}:\d{2}\s+(AM|PM))"
             r"\s+\d+\s+<A HREF=\"[^\"]*?"
             r"(PUBLIC_DISPATCHIS_\d{12}_\d+\.zip)"
             r"\">",
             line,
-        )
-        if m:
-            date_str = m.group(1)
+        ):
             fname = m.group(3)
-            dt = parsedate_to_datetime(date_str)
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=ZoneInfo("Australia/Sydney")).astimezone(
-                    timezone.utc
-                )
-            files.append((fname, dt))
+            try:
+                settlement_time = _parse_settlement_time(fname)
+            except (IndexError, ValueError):
+                continue
+            files.append((fname, settlement_time))
     return files
 
 
 def _parse_dispatch_csv(text: str) -> list[dict]:
     rows = []
     header = None
-    for line in text.splitlines():
-        line = line.strip()
+    reader = csv.reader(text.splitlines())
+    for line in reader:
         if not line:
             continue
         prefix = line[0]
-        content = line[2:]
 
         if prefix == "C":
             continue
         elif prefix == "I":
-            header = [c.strip().upper() for c in content.split(",")]
+            header = [c.strip().upper() for c in line[1:]]
         elif prefix == "D":
             if header is None:
                 continue
-            vals = content.split(",")
-            if len(vals) != len(header):
+            if len(line[1:]) != len(header):
                 continue
-            if len(vals) < 2 or vals[1].strip() != "REGIONSUM":
+            if len(line) < 2 or line[2].strip() != "REGIONSUM":
                 continue
-            row = dict(zip(header, vals))
+            row = dict(zip(header, line[1:]))
             rows.append(row)
         elif prefix == "F":
             continue
@@ -166,11 +169,10 @@ def run_nemweb_pipeline() -> list[dict]:
 
     if last_time is not None:
         logger.info("Latest data in DB: %s", last_time)
-        recent_files = [(f, t) for f, t in files if t > last_time]
-        if not recent_files:
-            files_to_process = files[:1]
-        else:
-            files_to_process = recent_files
+        files_to_process = [(f, t) for f, t in files if t > last_time]
+        if not files_to_process:
+            logger.info("No files with settlement > %s", last_time)
+            return []
     else:
         files_to_process = files[:1]
 
