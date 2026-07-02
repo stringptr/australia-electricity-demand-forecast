@@ -5,6 +5,7 @@ import logging
 
 from shared.logging import setup_json_logging
 from pipelines.demand_nemweb import run_nemweb_pipeline
+from utils.triggers import trigger_silver_assets
 
 setup_json_logging("dlt-demand-nemweb")
 
@@ -51,6 +52,7 @@ def main() -> None:
 
         if rows:
             logger.info("OK: %d new rows", len(rows))
+            trigger_silver_assets()
         else:
             logger.info("No new data yet")
 

@@ -4,7 +4,6 @@ import os
 from datetime import datetime, timedelta
 
 import dlt
-import pendulum
 from sqlalchemy import create_engine, text
 
 from utils.openmeteo import REGIONS, _fetch_region
@@ -23,7 +22,7 @@ WEATHER_FIELDS = [
 
 def _transform_row(row: dict) -> dict:
     result = {
-        "time": pendulum.parse(row["time"]),
+        "time": datetime.fromisoformat(row["time"]),
         "region_id": row["region_id"],
     }
     for f in WEATHER_FIELDS:
@@ -40,7 +39,7 @@ def _get_db_engine():
     return create_engine(f"postgresql://{user}:{password}@{host}:{port}/{db}")
 
 
-def run_weather_pipeline(year: int) -> None:
+def run_weather_pipeline(year: int) -> int:
     pipeline = dlt.pipeline(
         pipeline_name="weather_openmeteo",
         destination="postgres",
@@ -72,6 +71,8 @@ def run_weather_pipeline(year: int) -> None:
         logger.info("DB has no bronze.weather data, fetching all")
 
     end_month = min(12, now.month) if year == now.year else 12
+
+    total_rows = 0
 
     for region in REGIONS:
         region_id = region["id"]
@@ -110,5 +111,7 @@ def run_weather_pipeline(year: int) -> None:
             region_rows += len(rows)
 
         logger.info("REGION %s: DLT pipeline done (%d rows)", region_id, region_rows)
+        total_rows += region_rows
 
-    logger.info("PIPELINE: weather_openmeteo completed for year %d", year)
+    logger.info("PIPELINE: weather_openmeteo completed for year %d (%d rows)", year, total_rows)
+    return total_rows
