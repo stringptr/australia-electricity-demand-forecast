@@ -2,6 +2,8 @@ import os
 
 import great_expectations as gx
 
+from great_expectations import Checkpoint, ValidationDefinition
+
 from gx_quality.context import DATABASE_URL, get_context
 
 VALID_REGIONS = ["NSW1", "QLD1", "SA1", "TAS1", "VIC1"]
@@ -53,9 +55,8 @@ def _define_bronze_demand():
     v.expect_column_values_to_be_between(
         "demand_mw", min_value=0, max_value=20000, mostly=0.9
     )
-    v.save_expectation_suite(
-        "bronze.demand", discard_failed_expectations=False
-    )
+    v.expectation_suite.name = "bronze.demand"
+    get_context().suites.add_or_update(v.expectation_suite)
     return asset_name
 
 
@@ -77,9 +78,8 @@ def _define_bronze_weather():
     v.expect_column_values_to_be_between(
         "shortwave_radiation", 0, 1500, mostly=0.95
     )
-    v.save_expectation_suite(
-        "bronze.weather", discard_failed_expectations=False
-    )
+    v.expectation_suite.name = "bronze.weather"
+    get_context().suites.add_or_update(v.expectation_suite)
     return asset_name
 
 
@@ -95,9 +95,8 @@ def _define_silver_demand_5min():
         "demand_mw", min_value=0, max_value=20000, mostly=0.95
     )
     v.expect_compound_columns_to_be_unique(["time", "region_id"])
-    v.save_expectation_suite(
-        "silver.demand_5min", discard_failed_expectations=False
-    )
+    v.expectation_suite.name = "silver.demand_5min"
+    get_context().suites.add_or_update(v.expectation_suite)
     return asset_name
 
 
@@ -120,9 +119,8 @@ def _define_silver_weather_hourly():
         "shortwave_radiation", 0, 1500, mostly=0.95
     )
     v.expect_compound_columns_to_be_unique(["time", "region_id"])
-    v.save_expectation_suite(
-        "silver.weather_hourly", discard_failed_expectations=False
-    )
+    v.expectation_suite.name = "silver.weather_hourly"
+    get_context().suites.add_or_update(v.expectation_suite)
     return asset_name
 
 
@@ -147,9 +145,8 @@ def _define_silver_features_ml():
     v.expect_column_values_to_be_between("month", 1, 12)
     v.expect_column_values_to_be_between("season", 1, 4)
     v.expect_compound_columns_to_be_unique(["time", "region_id"])
-    v.save_expectation_suite(
-        "silver.features_ml", discard_failed_expectations=False
-    )
+    v.expectation_suite.name = "silver.features_ml"
+    get_context().suites.add_or_update(v.expectation_suite)
     return asset_name
 
 
@@ -164,9 +161,8 @@ def _define_silver_predictions():
         col = f"horizon_h{h:02d}"
         v.expect_column_values_to_not_be_null(col)
         v.expect_column_values_to_be_between(col, 0, 25000, mostly=0.95)
-    v.save_expectation_suite(
-        "silver.predictions", discard_failed_expectations=False
-    )
+    v.expectation_suite.name = "silver.predictions"
+    get_context().suites.add_or_update(v.expectation_suite)
     return asset_name
 
 
@@ -209,13 +205,17 @@ def setup_checkpoints(asset_names: dict[str, str]):
                 )
             except ValueError:
                 asset = ds.get_asset(asset_names[sn])
-            validations.append(
-                {
-                    "batch_request": asset.build_batch_request(),
-                    "expectation_suite_name": sn,
-                }
+            suite = context.suites.get(sn)
+            batch_definition = asset.add_batch_definition_whole_table(name=f"{sn}_batch")
+            vd = ValidationDefinition(
+                name=sn,
+                data=batch_definition,
+                suite=suite,
             )
-        context.checkpoints.add_or_update(cp_name, validations)
+            context.validation_definitions.add_or_update(vd)
+            validations.append(vd)
+        checkpoint = Checkpoint(name=cp_name, validation_definitions=validations)
+        context.checkpoints.add_or_update(checkpoint)
 
 
 def setup_all():
