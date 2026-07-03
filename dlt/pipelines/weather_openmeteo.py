@@ -2,10 +2,11 @@ import calendar
 import logging
 import os
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 
 import dlt
 from sqlalchemy import create_engine, text
+from zoneinfo import ZoneInfo
 
 from utils.openmeteo import REGIONS, _fetch_region
 
@@ -20,10 +21,14 @@ WEATHER_FIELDS = [
     "shortwave_radiation",
 ]
 
+REGION_TZ = {r["id"]: r["tz"] for r in REGIONS}
+
 
 def _transform_row(row: dict) -> dict:
+    dt = datetime.fromisoformat(row["time"])
+    tz = ZoneInfo(REGION_TZ.get(row["region_id"], "Australia/Sydney"))
     result = {
-        "time": datetime.fromisoformat(row["time"]),
+        "time": dt.replace(tzinfo=tz).astimezone(timezone.utc),
         "region_id": row["region_id"],
     }
     for f in WEATHER_FIELDS:
