@@ -3,9 +3,9 @@ import io
 import logging
 import os
 import re
-import shutil
+import tempfile
 import zipfile
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from zoneinfo import ZoneInfo
 
@@ -141,10 +141,10 @@ def _fetch_and_parse_file(fname: str) -> list[dict]:
     return demand_rows
 
 
-def _get_latest_processed_time(conn) -> datetime | None:
+def _get_data_range(conn) -> tuple[datetime | None, datetime | None]:
     with conn.cursor() as cur:
-        cur.execute("SELECT MAX(time) FROM bronze.demand")
-        return cur.fetchone()[0]
+        cur.execute("SELECT MIN(time), MAX(time) FROM bronze.demand")
+        return cur.fetchone()
 
 
 def run_nemweb_pipeline() -> list[dict]:
@@ -164,18 +164,28 @@ def run_nemweb_pipeline() -> list[dict]:
     )
 
     try:
-        last_time = _get_latest_processed_time(conn)
+        min_time, last_time = _get_data_range(conn)
     finally:
         conn.close()
 
-    if last_time is not None:
-        logger.info("Latest data in DB: %s", last_time)
-        files_to_process = [(f, t) for f, t in files if t > last_time]
-        if not files_to_process:
-            logger.info("No files with settlement > %s", last_time)
-            return []
-    else:
-        files_to_process = files[:1]
+    if last_time is None:
+        logger.info("No data in bronze.demand yet, skipping NEMWEB")
+        return []
+
+    data_span = last_time - min_time if min_time else timedelta(0)
+    if data_span < timedelta(days=28):
+        logger.info(
+            "Historical backfill not yet complete (< 28 days of data, span=%s), skipping NEMWEB",
+            data_span,
+        )
+        return []
+
+    logger.info("Latest data in DB: %s (span: %s)", last_time, data_span)
+    files_to_process = [(f, t) for f, t in files if t > last_time]
+
+    if not files_to_process:
+        logger.info("No files with settlement > %s", last_time)
+        return []
 
     all_rows = []
     for fname, _ in files_to_process:
@@ -190,15 +200,11 @@ def run_nemweb_pipeline() -> list[dict]:
         return []
 
     max_time = max(r["time"] for r in all_rows)
-    pipelines_dir = "/tmp/dlt/demand_nemweb"
-    if os.path.exists(pipelines_dir):
-        shutil.rmtree(pipelines_dir)
-
     pipeline = dlt.pipeline(
         pipeline_name="demand_nemweb",
         destination="postgres",
         dataset_name="bronze",
-        pipelines_dir=pipelines_dir,
+        pipelines_dir=tempfile.mkdtemp(prefix="dlt_nemweb_"),
     )
     pipeline.run(
         all_rows,

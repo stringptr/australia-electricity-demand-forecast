@@ -1,8 +1,8 @@
 import calendar
 import logging
 import os
-import shutil
-from datetime import datetime, timedelta
+import tempfile
+from datetime import datetime
 
 import dlt
 from sqlalchemy import create_engine, text
@@ -41,15 +41,11 @@ def _get_db_engine():
 
 
 def run_weather_pipeline(year: int) -> int:
-    pipelines_dir = "/tmp/dlt/weather_openmeteo"
-    if os.path.exists(pipelines_dir):
-        shutil.rmtree(pipelines_dir)
-
     pipeline = dlt.pipeline(
         pipeline_name="weather_openmeteo",
         destination="postgres",
         dataset_name="bronze",
-        pipelines_dir=pipelines_dir,
+        pipelines_dir=tempfile.mkdtemp(prefix="dlt_weather_"),
     )
 
     now = datetime.now()
@@ -57,23 +53,18 @@ def run_weather_pipeline(year: int) -> int:
     try:
         engine = _get_db_engine()
         with engine.connect() as conn:
-            result = conn.execute(text("SELECT MAX(time) FROM bronze.weather"))
-            last_time = result.scalar()
+            rows = conn.execute(
+                text(
+                    "SELECT DISTINCT EXTRACT(MONTH FROM time)::int "
+                    "FROM bronze.weather "
+                    "WHERE time >= :s AND time < :e"
+                ),
+                {"s": datetime(year, 1, 1), "e": datetime(year + 1, 1, 1)},
+            ).fetchall()
+            months_with_data = {r[0] for r in rows}
     except Exception:
-        logger.warning("Cannot query bronze.weather, fetching all data")
-        last_time = None
-
-    if last_time is not None:
-        start_from = last_time.date() - timedelta(days=1)
-        today = now.date()
-        if start_from >= today:
-            start_from = today
-            logger.info("DB has weather up to %s (today), will re-fetch today", last_time)
-        else:
-            logger.info("DB has weather up to %s, starting from %s", last_time, start_from)
-    else:
-        start_from = None
-        logger.info("DB has no bronze.weather data, fetching all")
+        months_with_data = set()
+        logger.warning("Cannot query bronze.weather months, will fetch all")
 
     end_month = min(12, now.month) if year == now.year else 12
 
@@ -85,21 +76,16 @@ def run_weather_pipeline(year: int) -> int:
         logger.info("REGION %s: DLT pipeline run starting ...", region_id)
 
         for month in range(1, end_month + 1):
+            if month in months_with_data:
+                logger.info("REGION %s month %02d: already has data, skipping",
+                            region_id, month)
+                continue
+
             month_start = f"{year}-{month:02d}-01"
             last_day = calendar.monthrange(year, month)[1]
             month_end = f"{year}-{month:02d}-{last_day:02d}"
             if year == now.year and month == now.month:
                 month_end = now.strftime("%Y-%m-%d")
-
-            if start_from is not None:
-                adjusted_start = start_from.isoformat()
-                if adjusted_start > month_start:
-                    month_start = adjusted_start
-
-            if month_start >= month_end:
-                logger.info("REGION %s month %02d: already complete, skipping",
-                            region_id, month)
-                continue
 
             logger.info("REGION %s month %02d: fetching %s → %s",
                         region_id, month, month_start, month_end)
