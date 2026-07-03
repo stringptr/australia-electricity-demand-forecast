@@ -138,8 +138,8 @@ gold_correlation_daily_schedule = ScheduleDefinition(
 
 train_multi_output_xgboost_schedule = ScheduleDefinition(
     name="train_multi_output_xgboost_schedule",
-    cron_schedule="0 1 * * 1",
-    target=["train_multi_output_xgboost"],
+    cron_schedule="0 3 * * 1",
+    job=train_multi_output_xgboost,
     execution_timezone="Australia/Sydney",
     default_status=DefaultScheduleStatus.RUNNING,
 )
@@ -164,7 +164,6 @@ defs = Definitions(
     },
     jobs=[
         historical_backfill.with_hooks({alert_on_failure}),
-        train_multi_output_xgboost.with_hooks({alert_on_failure}),
         validate_data.with_hooks({alert_on_failure}),
         build_gold_correlation.with_hooks({alert_on_failure}),
     ],
