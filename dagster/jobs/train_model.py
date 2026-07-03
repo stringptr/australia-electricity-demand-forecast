@@ -202,6 +202,12 @@ def train_models_op(context, split_data: dict) -> None:
                 f"  Train: {len(tr):,} rows  |  Test: {len(ts):,} rows"
             )
 
+            if len(tr) == 0 or len(ts) == 0:
+                context.log.warning(
+                    f"{region_id}: insufficient data (train={len(tr)}, test={len(ts)}), skipping"
+                )
+                continue
+
             with mlflow.start_run(
                 run_name=region_id, nested=True
             ) as child_run:
@@ -217,6 +223,13 @@ def train_models_op(context, split_data: dict) -> None:
                 model.fit(X_tr, y_tr, verbose=False)
 
                 y_pred = model.predict(X_ts)
+
+                if y_pred.ndim == 1:
+                    context.log.warning(
+                        f"{region_id}: y_pred is 1D (shape {y_pred.shape}), "
+                        f"expected ({len(X_ts)}, {MAX_HORIZON})"
+                    )
+                    y_pred = np.column_stack([y_pred] * MAX_HORIZON)
 
                 per_horizon_r2 = {}
                 per_horizon_mae = {}
