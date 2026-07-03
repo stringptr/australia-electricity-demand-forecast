@@ -11,6 +11,15 @@ from utils.openelectricity import fetch_demand_range
 logger = logging.getLogger(__name__)
 
 
+@dlt.resource(
+    table_name="demand",
+    write_disposition={"disposition": "merge", "strategy": "upsert"},
+    primary_key=("time", "region_id"),
+)
+def _demand_upsert(items):
+    yield from items
+
+
 def _get_db_engine():
     host = os.environ.get("PG_HOST", os.environ.get("POSTGRES_HOST", "postgres"))
     port = os.environ.get("PG_PORT", os.environ.get("POSTGRES_PORT", "5432"))
@@ -70,12 +79,7 @@ def run_demand_pipeline(year: int) -> None:
         month_rows = 0
 
         for chunk in fetch_demand_range(month_start, month_end):
-            pipeline.run(
-                chunk,
-                table_name="demand",
-                write_disposition="merge",
-                primary_key=("time", "region_id"),
-            )
+            pipeline.run(_demand_upsert(chunk))
             chunk_count += 1
             month_rows += len(chunk)
             logger.info("STORE: wrote chunk %d (%d rows) for %d-%02d",
