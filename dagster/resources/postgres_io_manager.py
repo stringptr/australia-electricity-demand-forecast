@@ -2,7 +2,8 @@ import os
 
 import pandas as pd
 from dagster import ConfigurableIOManager
-from sqlalchemy import create_engine
+from sqlalchemy import MetaData, Table, create_engine
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 
 class PostgresIOManager(ConfigurableIOManager):
@@ -30,15 +31,33 @@ class PostgresIOManager(ConfigurableIOManager):
             table = key_path[-1]
 
         engine = self._get_engine()
+        metadata = MetaData(schema=schema)
+        tbl = Table(table, metadata, autoload_with=engine)
+        pk_cols = [c.name for c in tbl.primary_key.columns]
+
         with engine.begin() as conn:
-            obj.to_sql(
-                table,
-                conn,
-                schema=schema,
-                if_exists="append",
-                index=False,
-                method="multi",
-            )
+            if pk_cols:
+                records = obj.to_dict("records")
+                stmt = pg_insert(tbl).values(records)
+                update_cols = {
+                    c.name: stmt.excluded[c.name]
+                    for c in tbl.columns
+                    if c.name not in pk_cols
+                }
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=pk_cols,
+                    set_=update_cols,
+                )
+                conn.execute(stmt)
+            else:
+                obj.to_sql(
+                    table,
+                    conn,
+                    schema=schema,
+                    if_exists="append",
+                    index=False,
+                    method="multi",
+                )
 
         context.log.info(f"Wrote {len(obj)} rows to {schema}.{table}")
         context.add_output_metadata(

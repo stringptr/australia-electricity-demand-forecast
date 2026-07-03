@@ -5,7 +5,14 @@ import sys
 sys.path.insert(0, "/opt/dagster/app")
 sys.path.insert(0, "/opt/dagster/dlt")
 
-from dagster import AssetCheckResult, AssetCheckSeverity, DefaultScheduleStatus, Definitions, ScheduleDefinition, asset_check
+from dagster import (
+    AssetCheckResult,
+    AssetCheckSeverity,
+    DefaultScheduleStatus,
+    Definitions,
+    ScheduleDefinition,
+    asset_check,
+)
 from dagster_dbt import DbtCliResource
 
 from jobs.assets.bronze import demand as bronze_demand
@@ -13,7 +20,6 @@ from jobs.assets.bronze import weather as bronze_weather
 from jobs.assets.silver import dbt_silver_assets
 from jobs.assets.gold import correlation_hourly as gold_correlation_hourly
 from jobs.assets.gold import correlation_daily as gold_correlation_daily
-from jobs.assets.ml import xgboost_models
 
 from jobs.historical_load import historical_backfill
 from jobs.train_model import train_multi_output_xgboost
@@ -60,6 +66,7 @@ def _run_gx_checkpoint(context, cp_name: str) -> AssetCheckResult:
 
     if not passed:
         from shared.alerts import send_alert
+
         send_alert(
             f"GX asset check *{cp_name}* FAILED\n"
             f"Expectations: {success}/{total} passed\n"
@@ -129,6 +136,14 @@ gold_correlation_daily_schedule = ScheduleDefinition(
     default_status=DefaultScheduleStatus.RUNNING,
 )
 
+train_multi_output_xgboost_schedule = ScheduleDefinition(
+    name="train_multi_output_xgboost_schedule",
+    cron_schedule="0 1 * * 1",
+    target=["train_multi_output_xgboost"],
+    execution_timezone="Australia/Sydney",
+    default_status=DefaultScheduleStatus.RUNNING,
+)
+
 
 defs = Definitions(
     assets=[
@@ -137,7 +152,6 @@ defs = Definitions(
         dbt_silver_assets,
         gold_correlation_hourly,
         gold_correlation_daily,
-        xgboost_models,
     ],
     asset_checks=asset_checks,
     resources={
@@ -156,5 +170,6 @@ defs = Definitions(
     ],
     schedules=[
         gold_correlation_daily_schedule,
+        train_multi_output_xgboost_schedule,
     ],
 )
