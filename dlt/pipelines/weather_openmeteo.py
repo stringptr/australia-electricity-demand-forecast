@@ -2,7 +2,7 @@ import calendar
 import logging
 import os
 import tempfile
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import dlt
 from sqlalchemy import create_engine, text
@@ -54,6 +54,16 @@ def run_weather_pipeline(year: int) -> int:
     )
 
     now = datetime.now()
+
+    try:
+        engine = _get_db_engine()
+        with engine.connect() as conn:
+            row = conn.execute(
+                text("SELECT MIN(time), MAX(time) FROM bronze.weather")
+            ).one()
+            min_time, max_time = row
+    except Exception:
+        min_time = max_time = None
 
     try:
         engine = _get_db_engine()
