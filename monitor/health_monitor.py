@@ -27,6 +27,12 @@ POSTGRES_PASSWORD = os.environ.get("PG_PASSWORD", "postgres")
 NATS_URL = os.environ.get("NATS_URL", "nats://nats:8222")
 DEBEZIUM_URL = os.environ.get("DEBEZIUM_URL", "http://debezium-server:8080")
 VM_URL = os.environ.get("VM_URL", "http://victoriametrics:8428")
+VL_URL = os.environ.get("VL_URL", "http://victorialogs:9428")
+DAGSTER_URL = os.environ.get("DAGSTER_URL", "http://dagster-webserver:3000")
+MLFLOW_URL = os.environ.get("MLFLOW_URL", "http://mlflow:5000")
+INFERENCE_URL = os.environ.get("INFERENCE_URL", "http://inference:8001")
+GARAGE_URL = os.environ.get("GARAGE_URL", "http://garage:3902")
+DASHBOARD_URL = os.environ.get("DASHBOARD_URL", "http://dashboard-backend:8000")
 VM_API_URL = f"{VM_URL}/api/v1/import/prometheus"
 
 _failures: dict[str, int] = {}
@@ -96,6 +102,40 @@ def _check_debezium() -> bool:
 
 def _check_victoriametrics() -> bool:
     return _http_get(f"{VM_URL}/-/healthy")
+
+
+def _check_victorialogs() -> bool:
+    return _http_get(f"{VL_URL}/health")
+
+
+def _check_dagster() -> bool:
+    return _http_get(f"{DAGSTER_URL}/dagit_info")
+
+
+def _check_mlflow() -> bool:
+    return _http_get(f"{MLFLOW_URL}/health")
+
+
+def _check_inference() -> bool:
+    try:
+        url = f"{VM_URL}/api/v1/query?query=demand_staleness_seconds"
+        resp = urllib.request.urlopen(url, timeout=5)
+        data = resp.json()
+        results = data.get("data", {}).get("result", [])
+        if not results:
+            return False
+        ts = float(results[0]["value"][0])
+        return (time.time() - ts) < 120
+    except Exception:
+        return False
+
+
+def _check_garage() -> bool:
+    return _http_get(f"{GARAGE_URL}/health")
+
+
+def _check_dashboard() -> bool:
+    return _http_get(f"{DASHBOARD_URL}/health")
 
 
 def _check_vm_disk() -> bool:
@@ -208,7 +248,7 @@ def _push_pipeline_latency() -> None:
         conn = _get_pg_connection()
         cur = conn.cursor()
         cur.execute("""
-            SELECT COALESCE(MAX(EXTRACT(EPOCH FROM (updated_at - time))), 0)
+            SELECT COALESCE(MAX(ABS(EXTRACT(EPOCH FROM (updated_at - time)))), 0)
             FROM silver.demand_5min
             WHERE updated_at > NOW() - INTERVAL '5 minutes'
         """)
@@ -295,6 +335,12 @@ def run_checks() -> list[tuple[str, bool]]:
         ("NATS", _check_nats),
         ("Debezium", _check_debezium),
         ("VictoriaMetrics", _check_victoriametrics),
+        ("VictoriaLogs", _check_victorialogs),
+        ("Dagster", _check_dagster),
+        ("MLflow", _check_mlflow),
+        ("Inference", _check_inference),
+        ("Garage", _check_garage),
+        ("Dashboard Backend", _check_dashboard),
     ]
     results = []
     for name, check_fn in checks:

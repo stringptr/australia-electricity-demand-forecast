@@ -67,12 +67,16 @@ export interface CorrelationResult {
 export interface MonitoringAccuracyItem {
   region: string;
   horizon: number;
-  mape: number;
+  mape: number | null;
+  mae?: number | null;
+  r2?: number | null;
+  source?: 'realtime' | 'training';
 }
 
 export interface MonitoringAccuracyResponse {
   regions: Record<string, MonitoringAccuracyItem[]>;
   items: MonitoringAccuracyItem[];
+  source?: 'realtime' | 'training';
 }
 
 export interface MonitoringUptimeService {

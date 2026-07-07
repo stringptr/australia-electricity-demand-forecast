@@ -93,11 +93,14 @@ export function useCorrelation(
   })
 }
 
-export function useMonitoringAccuracy(regionId?: string) {
-  const params = regionId ? `?region_id=${regionId}` : ''
+export function useMonitoringAccuracy(regionId?: string, source?: string) {
+  const params = new URLSearchParams()
+  if (regionId) params.set('region_id', regionId)
+  if (source) params.set('source', source)
+  const qs = params.toString()
   return useQuery({
-    queryKey: ['monitoring', 'accuracy', regionId],
-    queryFn: ({ signal }) => fetchJson(`${API_BASE}/monitoring/accuracy${params}`, signal),
+    queryKey: ['monitoring', 'accuracy', regionId, source],
+    queryFn: ({ signal }) => fetchJson(`${API_BASE}/monitoring/accuracy${qs ? `?${qs}` : ''}`, signal),
     refetchInterval: 300000,
   })
 }

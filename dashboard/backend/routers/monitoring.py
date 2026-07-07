@@ -1,10 +1,21 @@
 from fastapi import APIRouter
 import httpx
+import shutil
 from core.config import settings
+
+try:
+    import psutil  # type: ignore
+    _HAS_PSUTIL = True
+except ImportError:
+    _HAS_PSUTIL = False
 
 router = APIRouter(prefix="/monitoring", tags=["monitoring"])
 
-SERVICES = ["PostgreSQL", "NATS", "Debezium", "VictoriaMetrics"]
+SERVICES = [
+    "PostgreSQL", "NATS", "Debezium", "VictoriaMetrics",
+    "VictoriaLogs", "Dagster", "MLflow", "Inference",
+    "Garage", "Dashboard Backend",
+]
 REGIONS = ["NSW1", "QLD1", "SA1", "TAS1", "VIC1"]
 HORIZONS = list(range(1, 25))
 
@@ -40,8 +51,19 @@ async def _vm_query_range(query: str, start: float, end: float, step: int = 300)
 
 
 @router.get("/accuracy")
-async def get_accuracy(region_id: str | None = None):
-    """Get latest prediction accuracy per region and horizon."""
+async def get_accuracy(region_id: str | None = None, source: str = "realtime"):
+    """Get prediction accuracy per region and horizon.
+
+    Args:
+        region_id: optional region filter
+        source: 'realtime' (VM prediction_mape) or 'training' (MLflow metrics)
+    """
+    if source == "training":
+        return await _get_training_accuracy(region_id)
+    return await _get_realtime_accuracy(region_id)
+
+
+async def _get_realtime_accuracy(region_id: str | None = None):
     if region_id:
         query = f'prediction_mape{{region="{region_id}"}}'
     else:
@@ -56,6 +78,7 @@ async def get_accuracy(region_id: str | None = None):
             "region": labels.get("region", ""),
             "horizon": int(labels.get("horizon", 0)),
             "mape": round(value, 2),
+            "source": "realtime",
         })
 
     items.sort(key=lambda x: (x["region"], x["horizon"]))
@@ -67,7 +90,79 @@ async def get_accuracy(region_id: str | None = None):
             by_region[reg] = []
         by_region[reg].append(item)
 
-    return {"regions": by_region, "items": items}
+    return {"regions": by_region, "items": items, "source": "realtime"}
+
+
+async def _get_training_accuracy(region_id: str | None = None):
+    """Fetch training metrics from MLflow for the latest demand-forecasting run."""
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            exp_resp = await client.get(
+                f"{settings.MLFLOW_URL}/api/2.0/mlflow/experiments/search",
+                params={"filter": "name = 'demand-forecasting'", "max_results": "1"},
+            )
+            if exp_resp.status_code != 200:
+                return {"regions": {}, "items": [], "source": "training"}
+
+            experiments = exp_resp.json().get("experiments", [])
+            if not experiments:
+                return {"regions": {}, "items": [], "source": "training"}
+
+            exp_id = experiments[0]["experiment_id"]
+
+            runs_resp = await client.post(
+                f"{settings.MLFLOW_URL}/api/2.0/mlflow/runs/search",
+                json={
+                    "experiment_ids": [exp_id],
+                    "filter": "tags.region != ''",
+                    "order_by": ["start_time DESC"],
+                    "max_results": 25,
+                },
+            )
+            if runs_resp.status_code != 200:
+                return {"regions": {}, "items": [], "source": "training"}
+
+            runs = runs_resp.json().get("runs", [])
+
+            by_region = {}
+            for run in runs:
+                region = run.get("data", {}).get("tags", {}).get("region", "")
+                if not region:
+                    continue
+                if region in by_region:
+                    continue
+
+                metrics = {
+                    m["key"]: m["value"]
+                    for m in run.get("data", {}).get("metrics", [])
+                }
+                items = []
+                for h in range(1, 25):
+                    mae_key = f"mae_h{h:02d}"
+                    r2_key = f"r2_h{h:02d}"
+                    mae = metrics.get(mae_key)
+                    r2 = metrics.get(r2_key)
+                    if mae is not None or r2 is not None:
+                        items.append({
+                            "region": region,
+                            "horizon": h,
+                            "mape": None,
+                            "mae": round(mae, 2) if mae is not None else None,
+                            "r2": round(r2, 4) if r2 is not None else None,
+                            "source": "training",
+                        })
+                if items:
+                    by_region[region] = items
+
+            all_items = []
+            for items in by_region.values():
+                all_items.extend(items)
+            all_items.sort(key=lambda x: (x["region"], x["horizon"]))
+
+            return {"regions": by_region, "items": all_items, "source": "training"}
+
+    except Exception:
+        return {"regions": {}, "items": [], "source": "training"}
 
 
 @router.get("/uptime")
@@ -124,15 +219,26 @@ async def get_latency():
 
 @router.get("/resources")
 async def get_resources():
-    """Get current system resource usage."""
-    cpu = await _vm_query("system_cpu_percent")
-    mem = await _vm_query("system_memory_percent")
-    disk = await _vm_query("system_disk_percent")
+    """Get current system resource usage from psutil (host-level)."""
+    try:
+        if _HAS_PSUTIL:
+            cpu = psutil.cpu_percent(interval=None)
+            mem = psutil.virtual_memory().percent
+            disk = shutil.disk_usage("/")
+            disk_pct = (disk.used / disk.total) * 100
+        else:
+            cpu = 0.0
+            mem = 0.0
+            disk_pct = 0.0
+    except Exception:
+        cpu = 0.0
+        mem = 0.0
+        disk_pct = 0.0
 
     return {
-        "cpu": round(float(cpu[0]["value"][1]), 1) if cpu else 0.0,
-        "memory": round(float(mem[0]["value"][1]), 1) if mem else 0.0,
-        "disk": round(float(disk[0]["value"][1]), 1) if disk else 0.0,
+        "cpu": round(cpu, 1),
+        "memory": round(mem, 1),
+        "disk": round(disk_pct, 1),
         "thresholds": {
             "cpu": 90,
             "memory": 80,

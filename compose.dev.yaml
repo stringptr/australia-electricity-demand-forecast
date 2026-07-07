@@ -561,6 +561,7 @@ services:
       NATS_URL: nats://nats:4222
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:${POSTGRES_PORT:-5432}/electricity
       VM_URL: http://victoriametrics:8428
+      MLFLOW_URL: http://mlflow:5000
     volumes:
       - ./dashboard/backend:/app:ro
       - ./shared:/app/shared:ro

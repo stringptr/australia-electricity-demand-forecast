@@ -104,23 +104,43 @@ const SystemResourcesSection: React.FC = () => {
 
 const AccuracySection: React.FC = () => {
   const [selectedRegion, setSelectedRegion] = useState<string>('NSW1')
-  const { data, isLoading } = useMonitoringAccuracy()
+  const [source, setSource] = useState<'realtime' | 'training'>('realtime')
+  const { data, isLoading } = useMonitoringAccuracy(undefined, source)
 
   const chartData = useMemo(() => {
     if (!data?.regions) return []
     const items = data.regions[selectedRegion] || []
-    return items.map(item => ({
-      horizon: `h+${item.horizon}`,
-      mape: item.mape,
-      accuracy: 100 - item.mape,
-    }))
+    return items.map(item => {
+      const isTraining = data.source === 'training'
+      const accuracyVal = isTraining && item.r2 != null
+        ? item.r2 * 100
+        : item.mape != null
+          ? 100 - item.mape
+          : null
+      return {
+        horizon: `h+${item.horizon}`,
+        mape: item.mape,
+        accuracy: accuracyVal,
+        mae: item.mae ?? undefined,
+        r2: item.r2 ?? undefined,
+        isTraining,
+      }
+    })
   }, [data, selectedRegion])
 
   const overallMape = useMemo(() => {
     if (!data?.regions) return null
     const items = data.regions[selectedRegion] || []
     if (items.length === 0) return null
-    return items.reduce((sum, i) => sum + i.mape, 0) / items.length
+    const isTraining = data.source === 'training'
+    if (isTraining) {
+      const r2vals = items.map(i => i.r2).filter((v): v is number => v != null)
+      if (r2vals.length > 0) return r2vals.reduce((s, v) => s + v, 0) / r2vals.length
+      return null
+    }
+    const mapeVals = items.map(i => i.mape).filter((v): v is number => v != null)
+    if (mapeVals.length > 0) return mapeVals.reduce((s, v) => s + v, 0) / mapeVals.length
+    return null
   }, [data, selectedRegion])
 
   if (isLoading) {
@@ -132,10 +152,14 @@ const AccuracySection: React.FC = () => {
     )
   }
 
+  const isTraining = data?.source === 'training'
+
   return (
     <div className="bg-panel/90 border border-grid p-5">
       <div className="flex items-center justify-between mb-4">
-        <div className={sectionHeader}>Model Accuracy (MAPE)</div>
+        <div className={sectionHeader}>
+          Model Accuracy{isTraining ? ' (Training)' : ' (Real-time)'}
+        </div>
         <div className="flex gap-1">
           {REGIONS.map(r => (
             <button
@@ -153,13 +177,40 @@ const AccuracySection: React.FC = () => {
         </div>
       </div>
 
+      <div className="flex items-center gap-3 mb-4">
+        <span className="text-[10px] font-mono text-tactical-muted uppercase tracking-wider">Source:</span>
+        <select
+          value={source}
+          onChange={(e) => setSource(e.target.value as 'realtime' | 'training')}
+          className="bg-void border border-grid text-[10px] font-mono uppercase tracking-wider text-tactical-text px-2 py-1 cursor-pointer focus:outline-none focus:border-accent-yorange"
+        >
+          <option value="realtime">Real-time</option>
+          <option value="training">Training</option>
+        </select>
+      </div>
+
       {overallMape !== null && (
         <div className="flex items-center gap-3 mb-4">
-          <span className="text-[10px] font-mono text-tactical-muted uppercase tracking-wider">Avg MAPE:</span>
-          <span className="text-sm font-mono font-bold" style={{ color: getMapeColor(overallMape) }}>
-            {overallMape.toFixed(2)}%
+          <span className="text-[10px] font-mono text-tactical-muted uppercase tracking-wider">
+            {isTraining ? 'Avg R²:' : 'Avg MAPE:'}
           </span>
-          <span className="text-[10px] font-mono text-tactical-muted">({(100 - overallMape).toFixed(1)}% accuracy)</span>
+          <span
+            className="text-sm font-mono font-bold"
+            style={{
+              color: isTraining
+                ? getAccuracyColor(overallMape * 100)
+                : getMapeColor(overallMape),
+            }}
+          >
+            {isTraining
+              ? `${(overallMape * 100).toFixed(1)}%`
+              : `${overallMape.toFixed(2)}%`}
+          </span>
+          <span className="text-[10px] font-mono text-tactical-muted">
+            ({isTraining
+              ? 'Training R²'
+              : `${(100 - overallMape).toFixed(1)}% accuracy`})
+          </span>
         </div>
       )}
 
@@ -179,6 +230,7 @@ const AccuracySection: React.FC = () => {
               stroke="#52525b"
               tick={{ fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }}
               tickFormatter={(v) => `${v}%`}
+              domain={isTraining ? [0, 100] : [0, 'auto']}
             />
             <Tooltip
               contentStyle={{
@@ -189,13 +241,26 @@ const AccuracySection: React.FC = () => {
               }}
               labelStyle={{ color: '#52525b' }}
               itemStyle={{ color: '#e4e4e7' }}
-              formatter={(value: any, name: string) => [`${Number(value).toFixed(2)}%`, 'MAPE']}
+              formatter={(value: any, name: string) => {
+                if (name === 'accuracy') return [`${Number(value).toFixed(1)}%`, isTraining ? 'R²' : 'Accuracy']
+                return [`${Number(value).toFixed(2)}%`, 'MAPE']
+              }}
               labelFormatter={(label: string) => `Horizon: ${label}`}
             />
-            <Bar dataKey="mape">
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={getMapeColor(entry.mape)} />
-              ))}
+            <Bar dataKey={isTraining ? 'accuracy' : 'mape'}>
+              {chartData.map((entry, index) => {
+                const colorVal = isTraining ? (entry.accuracy ?? 0) : (entry.mape ?? 0)
+                return (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={
+                      isTraining
+                        ? getAccuracyColor(colorVal)
+                        : getMapeColor(colorVal)
+                    }
+                  />
+                )
+              })}
             </Bar>
           </BarChart>
         </ResponsiveContainer>

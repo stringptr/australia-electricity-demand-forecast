@@ -9,7 +9,8 @@ class Settings(BaseSettings):
         "postgresql://postgres:postgres@postgres:5432/electricity"
     )
     VM_URL: str = os.environ.get("VM_URL", "http://victoriametrics:8428")
-    
+    MLFLOW_URL: str = os.environ.get("MLFLOW_URL", "http://mlflow:5000")
+
     class Config:
         env_file = ".env"
 
