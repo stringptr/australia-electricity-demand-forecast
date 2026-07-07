@@ -97,7 +97,7 @@ const InsightPage: React.FC = () => {
 
           <div className="mb-6">
             <div className="text-xs font-mono text-tactical-muted uppercase tracking-[0.2em] mb-2">
-              Weather vs Demand — Scatter Plots
+              Weather vs Demand - Scatter Plots
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {WEATHER_VARS.map(wv => (
@@ -135,7 +135,7 @@ const InsightPage: React.FC = () => {
                 <div key={c.variable} className="bg-void/60 border border-grid p-3">
                   <div className="text-[11px] font-mono text-tactical-muted uppercase tracking-wider mb-1">{c.variable_label.split('(')[0].trim()}</div>
                   <div className="text-sm font-mono font-bold text-tactical-text">
-                    r = {c.r !== null ? c.r.toFixed(3) : '—'}
+                    r = {c.r !== null ? c.r.toFixed(3) : 'N/A'}
                   </div>
                   <div className="text-[11px] font-mono text-tactical-muted">n = {c.n.toLocaleString()}</div>
                 </div>

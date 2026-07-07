@@ -31,7 +31,7 @@ function getHeatColor(r: number | null): string {
 }
 
 function getStrength(r: number | null): string {
-  if (r === null) return '—'
+  if (r === null) return 'N/A'
   const abs = Math.abs(r)
   if (abs > 0.7) return 'strong'
   if (abs > 0.4) return 'moderate'
@@ -74,7 +74,7 @@ const CorrelationHeatmap: React.FC<CorrelationHeatmapProps> = ({ data }) => {
                 style={{ backgroundColor: color }}
               >
                 <span className="text-[11px] font-mono font-bold text-white mix-blend-difference">
-                  {r !== null ? (r >= 0 ? '+' : '') + r.toFixed(2) : '—'}
+                  {r !== null ? (r >= 0 ? '+' : '') + r.toFixed(2) : 'N/A'}
                 </span>
               </div>
               <div className="text-[9px] font-mono text-tactical-muted uppercase tracking-wider">
@@ -93,7 +93,7 @@ const CorrelationHeatmap: React.FC<CorrelationHeatmapProps> = ({ data }) => {
           <div className="bg-panel border border-grid px-3 py-2 shadow-lg">
             <div className="text-[11px] font-mono text-tactical-text whitespace-nowrap">{tooltip.label}</div>
             <div className="text-[10px] font-mono text-tactical-muted">
-              r = {tooltip.r !== null ? tooltip.r.toFixed(4) : '—'}
+              r = {tooltip.r !== null ? tooltip.r.toFixed(4) : 'N/A'}
             </div>
           </div>
         </div>

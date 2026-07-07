@@ -110,7 +110,7 @@ const RegionSidebar: React.FC<RegionSidebarProps> = ({ regionId, latestDemand, g
         <div className="bg-void/60 border border-grid p-3">
           <div className="text-[10px] font-mono text-tactical-muted uppercase tracking-[0.15em] mb-1">Predicted (h+{selectedHorizon})</div>
           <div className="text-xl font-mono font-bold text-tactical-text">
-            {predictedDemand !== null ? predictedDemand.toLocaleString() : '—'} <span className="text-xs font-normal text-tactical-muted">MW</span>
+            {predictedDemand !== null ? predictedDemand.toLocaleString() : 'N/A'} <span className="text-xs font-normal text-tactical-muted">MW</span>
           </div>
         </div>
 
@@ -121,7 +121,7 @@ const RegionSidebar: React.FC<RegionSidebarProps> = ({ regionId, latestDemand, g
                 {isTraining ? 'Accuracy (Training)' : 'Accuracy'}
               </div>
               <div className="text-xl font-mono font-bold" style={{ color: demandColor }}>
-                {accuracyPercent !== null ? `${accuracyPercent}%` : '—'}
+                {accuracyPercent !== null ? `${accuracyPercent}%` : 'N/A'}
                 {isTraining && accuracyPercent !== null && (
                   <span className="text-[10px] font-normal text-tactical-muted ml-1">R²</span>
                 )}

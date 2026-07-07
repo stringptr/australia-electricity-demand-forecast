@@ -105,7 +105,7 @@ async def run_nats_loop(on_inference_trigger) -> None:
 
     js = nc.jetstream()
     await js.subscribe(NATS_SUBJECT, cb=message_handler)
-    logger.info("Subscribed to %s — waiting for messages", NATS_SUBJECT)
+    logger.info("Subscribed to %s, waiting for messages", NATS_SUBJECT)
 
     try:
         while True:

@@ -29,7 +29,7 @@ const CorrelationBarChart: React.FC<CorrelationBarChartProps> = ({ data }) => {
   const chartData = data.map(d => ({
     label: d.variable_label.split('(')[0].trim(),
     r: d.r,
-    display: d.r !== null ? d.r.toFixed(3) : '—',
+    display: d.r !== null ? d.r.toFixed(3) : 'N/A',
   }))
 
   return (
@@ -59,7 +59,7 @@ const CorrelationBarChart: React.FC<CorrelationBarChartProps> = ({ data }) => {
             }}
             labelStyle={{ color: '#52525b' }}
             itemStyle={{ color: '#e4e4e7' }}
-            formatter={(_: any, __: string, props: any) => [`r = ${props.payload.r?.toFixed(4) || '—'}`, '']}
+            formatter={(_: any, __: string, props: any) => [`r = ${props.payload.r?.toFixed(4) || 'N/A'}`, '']}
           />
           <Bar dataKey="r">
             {chartData.map((entry, i) => (

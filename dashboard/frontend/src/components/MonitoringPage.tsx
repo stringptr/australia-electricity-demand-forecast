@@ -322,13 +322,13 @@ const UptimeSection: React.FC = () => {
             <div className="mb-1">
               <span className="text-sm font-mono font-bold text-tactical-text">24h: </span>
               <span className="text-sm font-mono font-bold" style={{ color: getUptimeColor(svc.uptime_24h) }}>
-                {svc.uptime_24h !== null ? `${svc.uptime_24h}%` : '—'}
+                {svc.uptime_24h !== null ? `${svc.uptime_24h}%` : 'N/A'}
               </span>
             </div>
             <div>
               <span className="text-[11px] font-mono text-tactical-muted">7d: </span>
               <span className="text-[11px] font-mono" style={{ color: getUptimeColor(svc.uptime_7d) }}>
-                {svc.uptime_7d !== null ? `${svc.uptime_7d}%` : '—'}
+                {svc.uptime_7d !== null ? `${svc.uptime_7d}%` : 'N/A'}
               </span>
             </div>
           </div>
