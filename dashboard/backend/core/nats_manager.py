@@ -49,7 +49,7 @@ class ConnectionManager:
     
     async def start_nats_consumer(self):
         """Subscribe to NATS JetStream and broadcast to all WS clients.
-        Does not raise on failure — retries in background so the app stays up."""
+        Does not raise on failure; retries in background so the app stays up."""
         try:
             self.nats_client = await nats.connect(settings.NATS_URL)
         except Exception as e:

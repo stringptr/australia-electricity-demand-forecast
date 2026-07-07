@@ -20,7 +20,6 @@ export function interpolateColor(value: number, min: number, max: number): strin
   let t = (value - min) / (max - min);
   t = Math.max(0, Math.min(1, t));
   
-  // Find which segment t falls into
   for (let i = 0; i < STOPS.length - 1; i++) {
     const s0 = STOPS[i];
     const s1 = STOPS[i+1];

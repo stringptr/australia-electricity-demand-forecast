@@ -29,11 +29,11 @@ def _run_cp(context, cp_name):
 
     if passed:
         context.log.info(
-            "GX %s PASS — %d/%d expectations met", cp_name, success, total
+            "GX %s PASS: %d/%d expectations met", cp_name, success, total
         )
     else:
         context.log.warning(
-            "GX %s FAIL — %d/%d expectations met (%d failures)",
+            "GX %s FAIL: %d/%d expectations met (%d failures)",
             cp_name,
             success,
             total,

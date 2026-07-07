@@ -1,6 +1,6 @@
 # VoltaicMap
 
-Real-Time Electricity Demand Prediction Based on Weather Forecast with Machine Learning — across all 5 Australian NEM states.
+Real-Time Electricity Demand Prediction Based on Weather Forecast with Machine Learning: across all 5 Australian NEM states.
 
 ![Architecture](assets/architecture.png)
 
@@ -91,10 +91,10 @@ Real-Time Electricity Demand Prediction Based on Weather Forecast with Machine L
 
 Each medallion layer is validated with **Great Expectations**:
 
-- `bronze_validation` — raw demand + weather
-- `silver_validation` — cleaned demand_5min + weather_hourly
-- `features_validation` — ML feature set
-- `predictions_validation` — inference output
+- `bronze_validation`: raw demand + weather
+- `silver_validation`: cleaned demand_5min + weather_hourly
+- `features_validation`: ML feature set
+- `predictions_validation`: inference output
 
 ---
 
@@ -122,46 +122,46 @@ Each medallion layer is validated with **Great Expectations**:
 
 ### Data Engineering
 
-- **[Dagster](https://dagster.io/)** — Orchestration (assets, jobs, schedules, partitions)
-- **[dlt](https://dlthub.com/)** — Data ingestion pipelines (OpenMeteo, OpenElectricity)
-- **[dbt](https://www.getdbt.com/)** — SQL transformations (bronze → silver)
-- **[Great Expectations](https://greatexpectations.io/)** — Data quality validation
+- **[Dagster](https://dagster.io/)**: Orchestration (assets, jobs, schedules, partitions)
+- **[dlt](https://dlthub.com/)**: Data ingestion pipelines (OpenMeteo, OpenElectricity)
+- **[dbt](https://www.getdbt.com/)**: SQL transformations (bronze → silver)
+- **[Great Expectations](https://greatexpectations.io/)**: Data quality validation
 
 ### Machine Learning
 
-- **[XGBoost](https://xgboost.readthedocs.io/)** — Multi-output regression (5 regions × 24 horizons)
-- **[MLflow](https://mlflow.org/)** — Experiment tracking & model registry
-- **[scikit-learn](https://scikit-learn.org/)** — Metrics (MAE, R²)
+- **[XGBoost](https://xgboost.readthedocs.io/)**: Multi-output regression (5 regions × 24 horizons)
+- **[MLflow](https://mlflow.org/)**: Experiment tracking & model registry
+- **[scikit-learn](https://scikit-learn.org/)**: Metrics (MAE, R²)
 
 ### Backend
 
-- **[FastAPI](https://fastapi.tiangolo.com/)** — REST API + WebSocket
-- **[DuckDB](https://duckdb.org/)** — In-process OLAP for analytics queries
+- **[FastAPI](https://fastapi.tiangolo.com/)**: REST API + WebSocket
+- **[DuckDB](https://duckdb.org/)**: In-process OLAP for analytics queries
 
 ### Frontend
 
-- **[React 19](https://react.dev/)** — UI framework
-- **[Vite](https://vitejs.dev/)** — Build tool
-- **[MapLibre GL](https://maplibre.org/)** — Interactive map
+- **[React 19](https://react.dev/)**: UI framework
+- **[Vite](https://vitejs.dev/)**: Build tool
+- **[MapLibre GL](https://maplibre.org/)**: Interactive map
 
 ### Infrastructure & Messaging
 
-- **[PostgreSQL](https://www.postgresql.org/)** — Primary database (electricity, dagster_db, mlflow_db)
-- **[NATS JetStream](https://nats.io/)** — Real-time CDC message streaming
-- **[Debezium Server](https://debezium.io/)** — PostgreSQL CDC → NATS
-- **[Garage](https://garagehq.deuxfleurs.fr/)** — S3-compatible object storage (MLflow artifacts, AEMO data)
-- **[Caddy](https://caddyserver.com/)** — Reverse proxy
+- **[PostgreSQL](https://www.postgresql.org/)**: Primary database (electricity, dagster_db, mlflow_db)
+- **[NATS JetStream](https://nats.io/)**: Real-time CDC message streaming
+- **[Debezium Server](https://debezium.io/)**: PostgreSQL CDC → NATS
+- **[Garage](https://garagehq.deuxfleurs.fr/)**: S3-compatible object storage (MLflow artifacts, AEMO data)
+- **[Caddy](https://caddyserver.com/)**: Reverse proxy
 
 ### Monitoring & Observability
 
-- **[VictoriaMetrics](https://victoriametrics.com/)** — Time-series metrics
-- **[VictoriaLogs](https://victoriametrics.com/)** — Log aggregation
-- **[Vector](https://vector.dev/)** — Log collector (Podman/Docker → VictoriaLogs)
-- **[Telegram Bot API](https://core.telegram.org/bots/api)** — Alerting
+- **[VictoriaMetrics](https://victoriametrics.com/)**: Time-series metrics
+- **[VictoriaLogs](https://victoriametrics.com/)**: Log aggregation
+- **[Vector](https://vector.dev/)**: Log collector (Podman/Docker → VictoriaLogs)
+- **[Telegram Bot API](https://core.telegram.org/bots/api)**: Alerting
 
 ### DevOps
 
-- **[Compose](https://docs.docker.com/compose/)** — Container orchestration
+- **[Compose](https://docs.docker.com/compose/)**: Container orchestration
 
 ---
 
@@ -169,7 +169,7 @@ Each medallion layer is validated with **Great Expectations**:
 
 - [Podman](https://podman.io/) OR [Docker](https://docs.docker.com/engine/install/)
 - [Podman-Compose](https://github.com/containers/podman-composehttps://github.com/containers/podman-compose) OR Docker Compose
-- OpenElectricity API key — register at [openelectricity.org.au](https://openelectricity.org.au)
+- OpenElectricity API key: register at [openelectricity.org.au](https://openelectricity.org.au)
 - (Optional) Telegram Bot API key + Chat ID for alerts
 
 ---

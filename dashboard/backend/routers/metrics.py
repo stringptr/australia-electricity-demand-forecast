@@ -13,11 +13,9 @@ async def get_global_metrics():
     # Round up to nearest 5000
     gradient_max = ((int(max_demand) + 4999) // 5000) * 5000 if max_demand else 20000
     
-    # Fetch VM metrics
     vm_metrics = {}
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            # Inference latency
             resp = await client.get(
                 f"{settings.VM_URL}/api/v1/query",
                 params={"query": "inference_latency_seconds"}
@@ -27,7 +25,6 @@ async def get_global_metrics():
                 if data.get("data", {}).get("result"):
                     vm_metrics["inference_latency"] = float(data["data"]["result"][0]["value"][1])
             
-            # Demand staleness
             resp = await client.get(
                 f"{settings.VM_URL}/api/v1/query",
                 params={"query": "demand_staleness_seconds"}
@@ -37,7 +34,6 @@ async def get_global_metrics():
                 if data.get("data", {}).get("result"):
                     vm_metrics["demand_staleness"] = float(data["data"]["result"][0]["value"][1])
             
-            # NATS messages
             resp = await client.get(
                 f"{settings.VM_URL}/api/v1/query",
                 params={"query": "nats_messages_received_total"}

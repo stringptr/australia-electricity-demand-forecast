@@ -56,7 +56,7 @@ def _wait_for_backfill():
 
             logger.info("No data yet, retrying in 10s ...")
             time.sleep(10)
-        logger.info("Backfill wait timeout — proceeding anyway")
+        logger.info("Backfill wait timeout, proceeding anyway")
     finally:
         conn.close()
 
