@@ -274,6 +274,25 @@ docker compose -f compose.dev.yaml --profile dev down
 
 ---
 
+## Dashboard Screenshots
+
+![Interactive Map - Region View](assets/dashboard-map-1.png)
+*Interactive map showing real-time electricity demand across NEM regions.*
+
+![Interactive Map - Region Detail](assets/dashboard-map-2.png)
+*Region sidebar with demand history, predictions, and accuracy metrics.*
+
+![Weather vs Demand Insights](assets/dashboard-insight.png)
+*Correlation analysis between weather variables and electricity demand.*
+
+![System Monitoring - Accuracy & Uptime](assets/dashboard-monitoring-1.png)
+*Model accuracy dashboard with MAPE per forecast horizon.*
+
+![System Monitoring - Resources & Latency](assets/dashboard-monitoring-2.png)
+*System resources, service uptime, and pipeline latency monitoring.*
+
+---
+
 ## Scheduling
 
 | Job | Schedule | Description |
