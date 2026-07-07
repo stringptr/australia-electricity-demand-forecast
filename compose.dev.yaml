@@ -382,7 +382,9 @@ services:
 
   mlflow:
     <<: *default-logging
-    image: ghcr.io/mlflow/mlflow:v3.14.0
+    build:
+      context: .
+      dockerfile: configs/mlflow/Containerfile
     restart: unless-stopped
     ports:
       - ${HOST_IP:-127.0.0.1}:5000:5000
@@ -395,17 +397,6 @@ services:
       AWS_DEFAULT_REGION: us-east-1
       AWS_S3_FORCE_PATH_STYLE: "true"
       MLFLOW_ALLOWED_HOSTS: "*"
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        pip install --quiet psycopg2-binary boto3 2>/dev/null
-        exec mlflow server \
-          --backend-store-uri "$${MLFLOW_BACKEND_STORE_URI}" \
-          --default-artifact-root "$${MLFLOW_ARTIFACTS_DESTINATION}" \
-          --serve-artifacts \
-          --host 0.0.0.0 \
-          --port 5000\
-          --allowed-hosts "*"
     healthcheck:
       test:
         [
@@ -418,7 +409,7 @@ services:
         ]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 3000
       start_period: 30s
     depends_on:
       postgres:
@@ -582,7 +573,8 @@ services:
           "CMD",
           "python",
           "-c",
-          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+          "import urllib.request;
+            urllib.request.urlopen('http://localhost:8000/health')",
         ]
       interval: 30s
       timeout: 5s

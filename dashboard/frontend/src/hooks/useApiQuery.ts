@@ -32,10 +32,12 @@ export function usePredictions(regionId: string) {
   })
 }
 
-export function useAccuracy(regionId: string) {
+export function useAccuracy(regionId: string, source?: string) {
+  const params = new URLSearchParams({ region_id: regionId })
+  if (source) params.set('source', source)
   return useQuery({
-    queryKey: ['predictions', 'accuracy', regionId],
-    queryFn: ({ signal }) => fetchJson(`${API_BASE}/predictions/accuracy?region_id=${regionId}`, signal),
+    queryKey: ['predictions', 'accuracy', regionId, source],
+    queryFn: ({ signal }) => fetchJson(`${API_BASE}/predictions/accuracy?${params}`, signal),
     enabled: !!regionId,
   })
 }

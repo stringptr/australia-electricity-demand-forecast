@@ -15,17 +15,23 @@ interface RegionSidebarProps {
 const RegionSidebar: React.FC<RegionSidebarProps> = ({ regionId, latestDemand, gradientMax, onClose }) => {
   const [selectedHorizon, setSelectedHorizon] = useState(1)
   const [historyHours, setHistoryHours] = useState(24)
+  const [accuracySource, setAccuracySource] = useState<'realtime' | 'training'>('realtime')
 
   const { data: historyData } = useDemandHistory(regionId, historyHours)
   const { data: predictionData } = usePredictions(regionId)
-  const { data: accuracyData } = useAccuracy(regionId)
+  const { data: accuracyData } = useAccuracy(regionId, accuracySource)
 
   const regionName = regionMeta[regionId]?.name || regionId
 
   const predictedDemand = predictionData?.predictions?.[selectedHorizon - 1] || null
 
-  const selectedMape = accuracyData?.accuracy?.find((a: any) => a.horizon === selectedHorizon)?.mape || null
-  const accuracyPercent = selectedMape !== null ? (100 - selectedMape).toFixed(1) : null
+  const isTraining = accuracyData?.source === 'training'
+  const selectedAccuracyItem = accuracyData?.accuracy?.find((a: any) => a.horizon === selectedHorizon)
+  const selectedMape = selectedAccuracyItem?.mape ?? null
+  const selectedR2 = selectedAccuracyItem?.r2 ?? null
+  const accuracyPercent = isTraining
+    ? (selectedR2 != null ? (selectedR2 * 100).toFixed(1) : null)
+    : (selectedMape !== null ? (100 - selectedMape).toFixed(1) : null)
 
   const chartData = (() => {
     const history = historyData?.data || []
@@ -59,7 +65,10 @@ const RegionSidebar: React.FC<RegionSidebarProps> = ({ regionId, latestDemand, g
   const accuracyChartData = (accuracyData?.accuracy || []).map((a: any) => ({
     horizon: `h+${a.horizon}`,
     mape: a.mape,
-    accuracy: a.mape !== null ? 100 - a.mape : null,
+    accuracy: a.r2 != null ? a.r2 * 100 : (a.mape !== null ? 100 - a.mape : null),
+    mae: a.mae ?? null,
+    r2: a.r2 ?? null,
+    source: accuracyData?.source ?? 'realtime',
   }))
 
   const TIME_RANGES: Array<{ label: string; hours: number }> = [
@@ -108,9 +117,14 @@ const RegionSidebar: React.FC<RegionSidebarProps> = ({ regionId, latestDemand, g
         <div className="bg-void/60 border border-grid p-3 col-span-2">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-[10px] font-mono text-tactical-muted uppercase tracking-[0.15em] mb-1">Accuracy</div>
+              <div className="text-[10px] font-mono text-tactical-muted uppercase tracking-[0.15em] mb-1">
+                {isTraining ? 'Accuracy (Training)' : 'Accuracy'}
+              </div>
               <div className="text-xl font-mono font-bold" style={{ color: demandColor }}>
                 {accuracyPercent !== null ? `${accuracyPercent}%` : '—'}
+                {isTraining && accuracyPercent !== null && (
+                  <span className="text-[10px] font-normal text-tactical-muted ml-1">R²</span>
+                )}
               </div>
             </div>
             <div>
@@ -149,7 +163,19 @@ const RegionSidebar: React.FC<RegionSidebarProps> = ({ regionId, latestDemand, g
         </div>
 
         <div className="mb-4">
-          <div className="text-[10px] font-mono text-tactical-muted uppercase tracking-[0.15em] mb-2">Prediction Accuracy per Horizon</div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-[10px] font-mono text-tactical-muted uppercase tracking-[0.15em]">
+              Prediction Accuracy per Horizon
+            </div>
+            <select
+              value={accuracySource}
+              onChange={(e) => setAccuracySource(e.target.value as 'realtime' | 'training')}
+              className="bg-void border border-grid px-2 py-1 text-xs font-mono text-tactical-text focus:outline-none focus:border-accent-yorange"
+            >
+              <option value="realtime">Real-time</option>
+              <option value="training">Training</option>
+            </select>
+          </div>
           <AccuracyChart data={accuracyChartData} />
         </div>
       </div>

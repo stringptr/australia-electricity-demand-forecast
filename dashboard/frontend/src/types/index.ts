@@ -18,6 +18,9 @@ export interface Prediction {
 export interface AccuracyPoint {
   horizon: number;
   mape: number | null;
+  mae?: number | null;
+  r2?: number | null;
+  source?: 'realtime' | 'training';
 }
 
 export interface WSMessage {

@@ -32,7 +32,7 @@ SERVICE_CHECK_MAP = {
     "VictoriaLogs":     ("http", "http://victorialogs:9428/health"),
     "Dagster":          ("http", "http://dagster-webserver:3000/dagit_info"),
     "MLflow":           ("http", "http://mlflow:5000/health"),
-    "Inference":        ("db",),
+    "Inference":        ("vm", "inference_cycle_completed_total"),
     "Garage":           ("http", "http://garage:3902/health"),
     "Dashboard Backend": ("self",),
 }
@@ -95,12 +95,6 @@ async def _check_service_direct(svc: str) -> bool:
                 ts = float(results[0]["value"][0])
                 return (time.time() - ts) < 120
             return False
-        if method == "db":
-            val = await fetchval(
-                "SELECT 1 FROM silver.predictions "
-                "WHERE created_at > NOW() - INTERVAL '10 minutes' LIMIT 1"
-            )
-            return val is not None
     except Exception:
         return False
 
@@ -262,29 +256,28 @@ async def _get_training_accuracy(region_id: str | None = None):
             if not exp_id:
                 return {"regions": {}, "items": [], "source": "training"}
 
-            runs_resp = await client.post(
-                f"{settings.MLFLOW_URL}/api/2.0/mlflow/runs/search",
-                json={
-                    "experiment_ids": [exp_id],
-                    "order_by": ["start_time DESC"],
-                    "max_results": 50,
-                },
-            )
-            if runs_resp.status_code != 200:
-                return {"regions": {}, "items": [], "source": "training"}
-
-            runs = runs_resp.json().get("runs", [])
-
             by_region = {}
-            for run in runs:
-                region = run.get("data", {}).get("tags", {}).get("region", "")
-                if not region:
-                    continue
-                if region_id and region != region_id:
-                    continue
-                if region in by_region:
+            for rid in REGIONS:
+                if region_id and rid != region_id:
                     continue
 
+                runs_resp = await client.post(
+                    f"{settings.MLFLOW_URL}/api/2.0/mlflow/runs/search",
+                    json={
+                        "experiment_ids": [exp_id],
+                        "filter": f"tags.region = '{rid}'",
+                        "order_by": ["start_time DESC"],
+                        "max_results": 1,
+                    },
+                )
+                if runs_resp.status_code != 200:
+                    continue
+
+                runs = runs_resp.json().get("runs", [])
+                if not runs:
+                    continue
+
+                run = runs[0]
                 metrics = {
                     m["key"]: m["value"]
                     for m in run.get("data", {}).get("metrics", [])
@@ -297,7 +290,7 @@ async def _get_training_accuracy(region_id: str | None = None):
                     r2 = metrics.get(r2_key)
                     if mae is not None or r2 is not None:
                         items.append({
-                            "region": region,
+                            "region": rid,
                             "horizon": h,
                             "mape": None,
                             "mae": round(mae, 2) if mae is not None else None,
@@ -305,7 +298,7 @@ async def _get_training_accuracy(region_id: str | None = None):
                             "source": "training",
                         })
                 if items:
-                    by_region[region] = items
+                    by_region[rid] = items
 
             all_items = []
             for items in by_region.values():
