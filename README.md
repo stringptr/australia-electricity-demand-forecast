@@ -102,9 +102,9 @@ Each medallion layer is validated with **Great Expectations**:
 
 | Source | Data | Resolution | Usage |
 |--------|------|------------|-------|
-| [OpenMeteo](https://open-meteo.com/) | Weather (temperature, humidity, precipitation, cloud cover, wind speed, solar radiation) | Hourly | Historical + forecast |
-| [OpenElectricity](https://openelectricity.org.au) | Electricity demand (total per state) | 5-minutely | Historical + current |
-| [AEMO NEMWEB](https://aemo.com.au) | Electricity demand (per state) | 5-minutely CSV | Supplementary historical |
+| [OpenMeteo](https://open-meteo.com/) | Weather (temperature, humidity, precipitation, cloud cover, wind speed, solar radiation) | Hourly API | Historical + RealTime Current + Forecast |
+| [OpenElectricity](https://openelectricity.org.au) | Electricity demand | 5-minutely API | Historical |
+| [AEMO NEMWEB](https://aemo.com.au) | Electricity demand | 5-minutely CSV | RealTime Current |
 
 ### Target Regions (NEM States)
 
