@@ -20,8 +20,9 @@ RUN pip install --no-cache-dir \
   seaborn \
   joblib \
   psycopg2-binary \
-  sqlalchemy \
-  numpy
+  sqlalchemy
+
+RUN pip install --no-cache-dir --upgrade "protobuf>=5.28.0" "grpcio>=1.67.0"
 
 RUN mkdir -p /opt/dagster/app /opt/dagster/dlt /opt/dagster/dbt
 

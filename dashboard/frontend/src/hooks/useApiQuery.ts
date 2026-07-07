@@ -121,10 +121,10 @@ export function useMonitoringLatency() {
   })
 }
 
-export function useMonitoringResources() {
+export function useMonitoringResources(refetchInterval: number = 60000) {
   return useQuery({
     queryKey: ['monitoring', 'resources'],
     queryFn: ({ signal }) => fetchJson(`${API_BASE}/monitoring/resources`, signal),
-    refetchInterval: 60000,
+    refetchInterval,
   })
 }

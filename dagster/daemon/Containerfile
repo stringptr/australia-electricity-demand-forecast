@@ -8,6 +8,8 @@ RUN pip install --no-cache-dir \
   openelectricity \
   numpy
 
+RUN pip install --no-cache-dir --upgrade "protobuf>=5.28.0" "grpcio>=1.67.0"
+
 ENV DAGSTER_HOME=/opt/dagster/dagster_home
 
 RUN mkdir -p "$DAGSTER_HOME"

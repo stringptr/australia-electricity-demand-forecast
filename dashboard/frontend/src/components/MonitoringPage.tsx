@@ -77,7 +77,16 @@ const ResourceGauge: React.FC<{ label: string; value: number; threshold: number;
 }
 
 const SystemResourcesSection: React.FC = () => {
-  const { data, isLoading } = useMonitoringResources()
+  const [refreshInterval, setRefreshInterval] = useState(1000)
+  const { data, isLoading } = useMonitoringResources(refreshInterval)
+
+  const INTERVAL_OPTIONS = [
+    { label: '1s', value: 1000 },
+    { label: '5s', value: 5000 },
+    { label: '10s', value: 10000 },
+    { label: '30s', value: 30000 },
+    { label: '60s', value: 60000 },
+  ]
 
   if (isLoading) {
     return (
@@ -92,7 +101,21 @@ const SystemResourcesSection: React.FC = () => {
 
   return (
     <div className="bg-panel/90 border border-grid p-5">
-      <div className={sectionHeader}>System Resources</div>
+      <div className="flex items-center justify-between mb-3">
+        <div className={sectionHeader} style={{ marginBottom: 0 }}>System Resources</div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[9px] font-mono text-tactical-muted uppercase tracking-wider">Refresh:</span>
+          <select
+            value={refreshInterval}
+            onChange={(e) => setRefreshInterval(Number(e.target.value))}
+            className="bg-void border border-grid text-[10px] font-mono text-tactical-text px-1.5 py-0.5 cursor-pointer focus:outline-none focus:border-accent-yorange"
+          >
+            {INTERVAL_OPTIONS.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <ResourceGauge label="CPU" value={resources.cpu} threshold={resources.thresholds.cpu} />
         <ResourceGauge label="Memory" value={resources.memory} threshold={resources.thresholds.memory} />

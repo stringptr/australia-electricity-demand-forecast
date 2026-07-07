@@ -32,7 +32,7 @@ def load_models() -> dict[str, XGBRegressor]:
         try:
             models[region] = retry(
                 lambda: mlflow.xgboost.load_model(model_uri),
-                max_retries=None,
+                max_retries=3,
                 delay=2,
                 exceptions=_RETRYABLE,
             )()
