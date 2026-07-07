@@ -14,8 +14,9 @@ interface RegionSidebarProps {
 
 const RegionSidebar: React.FC<RegionSidebarProps> = ({ regionId, latestDemand, gradientMax, onClose }) => {
   const [selectedHorizon, setSelectedHorizon] = useState(1)
+  const [historyHours, setHistoryHours] = useState(24)
 
-  const { data: historyData } = useDemandHistory(regionId, 24)
+  const { data: historyData } = useDemandHistory(regionId, historyHours)
   const { data: predictionData } = usePredictions(regionId)
   const { data: accuracyData } = useAccuracy(regionId)
 
@@ -60,6 +61,16 @@ const RegionSidebar: React.FC<RegionSidebarProps> = ({ regionId, latestDemand, g
     mape: a.mape,
     accuracy: a.mape !== null ? 100 - a.mape : null,
   }))
+
+  const TIME_RANGES: Array<{ label: string; hours: number }> = [
+    { label: '3 Days', hours: 72 },
+    { label: '1 Week', hours: 168 },
+    { label: '2 Weeks', hours: 336 },
+    { label: '3 Weeks', hours: 504 },
+    { label: '1 Month', hours: 720 },
+  ]
+
+  const currentRangeLabel = TIME_RANGES.find(r => r.hours === historyHours)?.label || `${historyHours}h`
 
   const demandColor = interpolateColor(latestDemand, 0, gradientMax || 20000)
 
@@ -120,7 +131,20 @@ const RegionSidebar: React.FC<RegionSidebarProps> = ({ regionId, latestDemand, g
 
       <div className="flex-1 px-4 min-h-0 overflow-auto">
         <div className="mb-4">
-          <div className="text-[10px] font-mono text-tactical-muted uppercase tracking-[0.15em] mb-2">Demand Forecast (48h)</div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-[10px] font-mono text-tactical-muted uppercase tracking-[0.15em]">
+              Demand History ({currentRangeLabel})
+            </div>
+            <select
+              value={historyHours}
+              onChange={(e) => setHistoryHours(Number(e.target.value))}
+              className="bg-void border border-grid px-2 py-1 text-xs font-mono text-tactical-text focus:outline-none focus:border-accent-yorange"
+            >
+              {TIME_RANGES.map(r => (
+                <option key={r.hours} value={r.hours}>{r.label}</option>
+              ))}
+            </select>
+          </div>
           <DemandChart data={chartData} />
         </div>
 
