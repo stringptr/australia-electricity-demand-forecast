@@ -1,0 +1,4 @@
+{
+  "description": "VoltaicMap NATS JetStream - electricity.silver.demand_5min",
+  "url": "nats://nats:4222"
+}
