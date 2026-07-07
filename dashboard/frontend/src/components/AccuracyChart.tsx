@@ -15,6 +15,9 @@ interface AccuracyChartProps {
     horizon: string
     mape: number | null
     accuracy: number | null
+    mae?: number | null
+    r2?: number | null
+    source?: 'realtime' | 'training'
   }>
 }
 
