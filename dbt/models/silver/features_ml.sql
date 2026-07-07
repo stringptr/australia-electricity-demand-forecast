@@ -28,8 +28,10 @@ weather_aligned AS (
 ),
 
 {% if is_incremental() %}
-latest_ts AS (
-    SELECT COALESCE(MAX(time), '1900-01-01') AS max_time FROM {{ this }}
+region_latest AS (
+    SELECT region_id, MAX(time) AS max_time
+    FROM {{ this }}
+    GROUP BY region_id
 ),
 {% endif %}
 
@@ -47,8 +49,8 @@ joined AS (
     FROM demand_hourly d
     LEFT JOIN weather_aligned w ON d.time = w.time AND d.region_id = w.region_id
     {% if is_incremental() %}
-      , latest_ts
-      WHERE d.time > latest_ts.max_time
+    LEFT JOIN region_latest rl ON d.region_id = rl.region_id
+    WHERE rl.max_time IS NULL OR d.time > rl.max_time
     {% endif %}
 )
 
